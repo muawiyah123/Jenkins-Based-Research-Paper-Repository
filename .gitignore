@@ -1,0 +1,35 @@
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.properties
+
+### STS & Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+### VS Code ###
+.vscode/
+
+### OS & Temp Files ###
+Thumbs.db
+desktop.ini
+.DS_Store
+*.log
+/logs/
+*.tmp
+
+### Local Credentials & Profiles ###
+application-local.properties
+*.pem
+*.key
