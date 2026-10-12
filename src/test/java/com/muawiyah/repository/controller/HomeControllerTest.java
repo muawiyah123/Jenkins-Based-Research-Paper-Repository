@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -35,7 +36,7 @@ class HomeControllerTest {
 
         long duration = System.currentTimeMillis() - startTime;
         // Verify provisional local latency boundary (< 500 ms)
-        org.junit.jupiter.api.Assertions.assertTrue(
+        assertTrue(
                 duration < 500,
                 "Home page request exceeded the provisional 500 ms target: " + duration + "ms"
         );
