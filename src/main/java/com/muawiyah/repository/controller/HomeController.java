@@ -19,4 +19,9 @@ public class HomeController {
         model.addAttribute("currentPhase", "Week 3 — Foundation & Application Scaffold");
         return "index";
     }
+
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
 }

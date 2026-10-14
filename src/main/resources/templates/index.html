@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -107,10 +107,21 @@
                         </span>
                     </li>
                 </ul>
-                <div class="d-flex align-items-center">
-                    <span class="badge bg-light text-dark border px-3 py-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark border px-3 py-2 d-none d-lg-inline-block">
                         <strong th:text="${studentName}">Muawiyah Narvel</strong> (<span th:text="${rollNumber}">23108A0020</span>)
                     </span>
+                    <!-- Anonymous user -> Sign In button -->
+                    <div sec:authorize="isAnonymous()">
+                        <a href="/login" class="btn btn-outline-primary btn-sm px-3 fw-semibold">Sign In</a>
+                    </div>
+                    <!-- Authenticated user -> Username badge & Sign Out form -->
+                    <div sec:authorize="isAuthenticated()" class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary text-white px-2 py-1" sec:authentication="name">User</span>
+                        <form th:action="@{/logout}" method="post" class="d-inline m-0">
+                            <button type="submit" class="btn btn-outline-danger btn-sm py-1 px-2">Sign Out</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -122,7 +133,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <div class="hero-badge mb-3">
-                        Week 5 — Public Catalog, Search &amp; Paper Detail
+                        Week 6 — Role-Based Security &amp; Review State Machine
                     </div>
                     <h1 class="display-5 fw-bold mb-3">
                         Jenkins-Based Research Paper Repository
