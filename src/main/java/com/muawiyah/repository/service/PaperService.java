@@ -60,4 +60,22 @@ public interface PaperService {
      * @return a Page of matching papers
      */
     Page<Paper> search(String keyword, Pageable pageable);
+
+    /**
+     * Updates an existing research paper's metadata and enforces lifecycle transition rules.
+     *
+     * Authorization and State Rules:
+     * 1. Paper must exist (or throws IllegalArgumentException).
+     * 2. Author verification: caller must match submitterUsername (or throws IllegalStateException).
+     * 3. State lock: Only SUBMITTED or REVISION_REQUESTED papers may be edited. Papers
+     *    in UNDER_REVIEW, ACCEPTED, or REJECTED status throw IllegalStateException.
+     * 4. Resubmission transition: If the paper is in REVISION_REQUESTED, saving revisions
+     *    automatically transitions reviewStatus to UNDER_REVIEW.
+     *
+     * @param id              database ID of the paper to edit
+     * @param form            validated form DTO containing updated fields
+     * @param currentUsername username of the user attempting the edit
+     * @return the persisted updated Paper entity
+     */
+    Paper updatePaper(Long id, PaperSubmissionForm form, String currentUsername);
 }

@@ -1,5 +1,6 @@
 package com.muawiyah.repository.dto;
 
+import com.muawiyah.repository.model.Paper;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -74,4 +75,19 @@ public class PaperSubmissionForm {
 
     public String getSubmitterEmail() { return submitterEmail; }
     public void setSubmitterEmail(String submitterEmail) { this.submitterEmail = submitterEmail; }
+
+    /**
+     * Factory method to pre-populate form from an existing Paper entity.
+     */
+    public static PaperSubmissionForm fromPaper(Paper paper) {
+        PaperSubmissionForm form = new PaperSubmissionForm();
+        form.setTitle(paper.getTitle());
+        form.setAuthors(paper.getAuthors());
+        form.setAbstractText(paper.getAbstractText());
+        form.setKeywords(paper.getKeywords());
+        form.setPublicationYear(paper.getPublicationYear());
+        form.setDoiUrl(paper.getDoiUrl());
+        form.setSubmitterEmail(paper.getSubmitterEmail());
+        return form;
+    }
 }

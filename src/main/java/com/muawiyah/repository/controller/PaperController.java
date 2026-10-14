@@ -2,6 +2,7 @@ package com.muawiyah.repository.controller;
 
 import com.muawiyah.repository.dto.PaperSubmissionForm;
 import com.muawiyah.repository.model.Paper;
+import com.muawiyah.repository.model.ReviewStatus;
 import com.muawiyah.repository.service.PaperService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -165,5 +166,97 @@ public class PaperController {
 
         // Redirect to the detail page so the researcher can review what was saved.
         return "redirect:/papers/" + saved.getId();
+    }
+
+    // ─── Edit & Resubmission Workflow (Task 8) ────────────────────────────────
+
+    /**
+     * Renders the paper metadata editing form.
+     * GET /papers/{id}/edit
+     *
+     * State Guard: Only papers in SUBMITTED or REVISION_REQUESTED can be edited.
+     * Ownership Guard: Only the original submitter can access the edit form.
+     */
+    @GetMapping("/{id}/edit")
+    public String showEditForm(@PathVariable Long id,
+                               Principal principal,
+                               RedirectAttributes redirectAttributes,
+                               Model model) {
+        Optional<Paper> paperOpt = paperService.findById(id);
+        if (paperOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Paper #" + id + " does not exist.");
+            return "redirect:/papers";
+        }
+
+        Paper paper = paperOpt.get();
+        String currentUsername = (principal != null) ? principal.getName() : "researcher";
+
+        // Status check
+        if (paper.getReviewStatus() != ReviewStatus.SUBMITTED &&
+            paper.getReviewStatus() != ReviewStatus.REVISION_REQUESTED) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Paper #" + id + " is currently " + paper.getReviewStatus().getDisplayName() +
+                    " and cannot be edited.");
+            return "redirect:/papers/" + id;
+        }
+
+        // Ownership check
+        if (principal != null && !paper.getSubmitterUsername().equals(currentUsername)) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "You are not authorized to edit this paper.");
+            return "redirect:/papers/" + id;
+        }
+
+        model.addAttribute("paperId", id);
+        model.addAttribute("paper", paper);
+        model.addAttribute("paperForm", PaperSubmissionForm.fromPaper(paper));
+        model.addAttribute("pageTitle", "Edit Paper: " + paper.getTitle());
+        return "papers/edit";
+    }
+
+    /**
+     * Handles metadata update submissions and author revision resubmissions.
+     * POST /papers/{id}/edit
+     */
+    @PostMapping("/{id}/edit")
+    public String handleEdit(@PathVariable Long id,
+                             @Valid @ModelAttribute("paperForm") PaperSubmissionForm form,
+                             BindingResult result,
+                             Principal principal,
+                             RedirectAttributes redirectAttributes,
+                             Model model) {
+        Optional<Paper> paperOpt = paperService.findById(id);
+        if (paperOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Paper #" + id + " does not exist.");
+            return "redirect:/papers";
+        }
+
+        Paper paper = paperOpt.get();
+
+        if (result.hasErrors()) {
+            model.addAttribute("paperId", id);
+            model.addAttribute("paper", paper);
+            model.addAttribute("pageTitle", "Edit Paper: " + paper.getTitle());
+            return "papers/edit";
+        }
+
+        String currentUsername = (principal != null) ? principal.getName() : "researcher";
+
+        try {
+            boolean wasRevisionRequested = paper.getReviewStatus() == ReviewStatus.REVISION_REQUESTED;
+            Paper updated = paperService.updatePaper(id, form, currentUsername);
+
+            if (wasRevisionRequested) {
+                redirectAttributes.addFlashAttribute("successMessage",
+                        "Revisions submitted successfully! Paper status has been updated to Under Review.");
+            } else {
+                redirectAttributes.addFlashAttribute("successMessage",
+                        "Paper metadata updated successfully!");
+            }
+            return "redirect:/papers/" + updated.getId();
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/papers/" + id;
+        }
     }
 }

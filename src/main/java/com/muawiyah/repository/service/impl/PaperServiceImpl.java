@@ -92,4 +92,41 @@ public class PaperServiceImpl implements PaperService {
     public Page<Paper> search(String keyword, Pageable pageable) {
         return paperRepository.searchByKeyword(keyword, pageable);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Paper updatePaper(Long id, PaperSubmissionForm form, String currentUsername) {
+        Paper paper = paperRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Paper not found with id: " + id));
+
+        // 1. Author ownership verification
+        if (currentUsername != null && !paper.getSubmitterUsername().equals(currentUsername)) {
+            throw new IllegalStateException("Unauthorized: Only the author '" + paper.getSubmitterUsername() +
+                    "' is permitted to edit this paper.");
+        }
+
+        // 2. Status verification: only SUBMITTED or REVISION_REQUESTED papers are editable
+        ReviewStatus status = paper.getReviewStatus();
+        if (status != ReviewStatus.SUBMITTED && status != ReviewStatus.REVISION_REQUESTED) {
+            throw new IllegalStateException("Cannot edit paper in status: " + status);
+        }
+
+        // 3. Update editable metadata fields
+        paper.setTitle(form.getTitle());
+        paper.setAuthors(form.getAuthors());
+        paper.setAbstractText(form.getAbstractText());
+        paper.setKeywords(form.getKeywords());
+        paper.setPublicationYear(form.getPublicationYear());
+        paper.setDoiUrl(form.getDoiUrl());
+        paper.setSubmitterEmail(form.getSubmitterEmail());
+
+        // 4. Resubmission transition: moving from REVISION_REQUESTED to UNDER_REVIEW
+        if (status == ReviewStatus.REVISION_REQUESTED) {
+            paper.setReviewStatus(ReviewStatus.UNDER_REVIEW);
+        }
+
+        return paperRepository.save(paper);
+    }
 }
