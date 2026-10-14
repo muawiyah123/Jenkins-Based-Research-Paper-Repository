@@ -282,4 +282,117 @@ class PaperServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Paper not found");
     }
+
+    // ─── Peer-Review State Machine tests (Task 10 - US-006, US-007) ──────────
+
+    @Test
+    @DisplayName("updateReviewStatus should successfully transition SUBMITTED to UNDER_REVIEW")
+    void shouldTransitionSubmittedToUnderReview() {
+        Paper paper = new Paper();
+        paper.setId(10L);
+        paper.setReviewStatus(ReviewStatus.SUBMITTED);
+        when(paperRepository.findById(10L)).thenReturn(Optional.of(paper));
+        when(paperRepository.save(any(Paper.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Paper updated = paperService.updateReviewStatus(10L, ReviewStatus.UNDER_REVIEW, "reviewer");
+
+        assertThat(updated.getReviewStatus()).isEqualTo(ReviewStatus.UNDER_REVIEW);
+        verify(paperRepository).save(paper);
+    }
+
+    @Test
+    @DisplayName("updateReviewStatus should successfully transition UNDER_REVIEW to ACCEPTED")
+    void shouldTransitionUnderReviewToAccepted() {
+        Paper paper = new Paper();
+        paper.setId(11L);
+        paper.setReviewStatus(ReviewStatus.UNDER_REVIEW);
+        when(paperRepository.findById(11L)).thenReturn(Optional.of(paper));
+        when(paperRepository.save(any(Paper.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Paper updated = paperService.updateReviewStatus(11L, ReviewStatus.ACCEPTED, "reviewer");
+
+        assertThat(updated.getReviewStatus()).isEqualTo(ReviewStatus.ACCEPTED);
+        verify(paperRepository).save(paper);
+    }
+
+    @Test
+    @DisplayName("updateReviewStatus should successfully transition UNDER_REVIEW to REJECTED")
+    void shouldTransitionUnderReviewToRejected() {
+        Paper paper = new Paper();
+        paper.setId(12L);
+        paper.setReviewStatus(ReviewStatus.UNDER_REVIEW);
+        when(paperRepository.findById(12L)).thenReturn(Optional.of(paper));
+        when(paperRepository.save(any(Paper.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Paper updated = paperService.updateReviewStatus(12L, ReviewStatus.REJECTED, "reviewer");
+
+        assertThat(updated.getReviewStatus()).isEqualTo(ReviewStatus.REJECTED);
+        verify(paperRepository).save(paper);
+    }
+
+    @Test
+    @DisplayName("updateReviewStatus should successfully transition UNDER_REVIEW to REVISION_REQUESTED")
+    void shouldTransitionUnderReviewToRevisionRequested() {
+        Paper paper = new Paper();
+        paper.setId(13L);
+        paper.setReviewStatus(ReviewStatus.UNDER_REVIEW);
+        when(paperRepository.findById(13L)).thenReturn(Optional.of(paper));
+        when(paperRepository.save(any(Paper.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Paper updated = paperService.updateReviewStatus(13L, ReviewStatus.REVISION_REQUESTED, "reviewer");
+
+        assertThat(updated.getReviewStatus()).isEqualTo(ReviewStatus.REVISION_REQUESTED);
+        verify(paperRepository).save(paper);
+    }
+
+    @Test
+    @DisplayName("updateReviewStatus should reject illegal skip transition from SUBMITTED directly to ACCEPTED")
+    void shouldRejectIllegalSkipTransition() {
+        Paper paper = new Paper();
+        paper.setId(14L);
+        paper.setReviewStatus(ReviewStatus.SUBMITTED);
+        when(paperRepository.findById(14L)).thenReturn(Optional.of(paper));
+
+        assertThatThrownBy(() -> paperService.updateReviewStatus(14L, ReviewStatus.ACCEPTED, "reviewer"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot move from SUBMITTED to ACCEPTED");
+    }
+
+    @Test
+    @DisplayName("updateReviewStatus should reject any transition from terminal ACCEPTED status")
+    void shouldRejectTransitionFromTerminalAccepted() {
+        Paper paper = new Paper();
+        paper.setId(15L);
+        paper.setReviewStatus(ReviewStatus.ACCEPTED);
+        when(paperRepository.findById(15L)).thenReturn(Optional.of(paper));
+
+        assertThatThrownBy(() -> paperService.updateReviewStatus(15L, ReviewStatus.UNDER_REVIEW, "reviewer"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("terminal state");
+    }
+
+    @Test
+    @DisplayName("updateReviewStatus should throw IllegalArgumentException when paper ID does not exist")
+    void shouldThrowWhenUpdatingReviewStatusForMissingPaper() {
+        when(paperRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> paperService.updateReviewStatus(999L, ReviewStatus.UNDER_REVIEW, "reviewer"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Paper not found");
+    }
+
+    @Test
+    @DisplayName("findByReviewStatus should delegate to repository")
+    void shouldDelegateFindByReviewStatusToRepository() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Paper p = new Paper(); p.setId(20L); p.setReviewStatus(ReviewStatus.UNDER_REVIEW);
+        Page<Paper> expected = new PageImpl<>(List.of(p), pageable, 1);
+        when(paperRepository.findByReviewStatus(ReviewStatus.UNDER_REVIEW, pageable)).thenReturn(expected);
+
+        Page<Paper> result = paperService.findByReviewStatus(ReviewStatus.UNDER_REVIEW, pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent()).containsExactly(p);
+        verify(paperRepository).findByReviewStatus(ReviewStatus.UNDER_REVIEW, pageable);
+    }
 }

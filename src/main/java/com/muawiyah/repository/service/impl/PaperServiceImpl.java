@@ -129,4 +129,41 @@ public class PaperServiceImpl implements PaperService {
 
         return paperRepository.save(paper);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Paper updateReviewStatus(Long paperId, ReviewStatus newStatus, String reviewerUsername) {
+        Paper paper = paperRepository.findById(paperId)
+                .orElseThrow(() -> new IllegalArgumentException("Paper not found with id: " + paperId));
+
+        ReviewStatus currentStatus = paper.getReviewStatus();
+
+        // 1. Assert terminal state immutability
+        if (currentStatus.isTerminal()) {
+            throw new IllegalStateException("Paper #" + paperId + " is in terminal state " +
+                    currentStatus + " and cannot be modified.");
+        }
+
+        // 2. Assert valid state transition via domain state machine rules
+        if (!currentStatus.canTransitionTo(newStatus)) {
+            throw new IllegalStateException("Invalid state transition: Cannot move from " +
+                    currentStatus + " to " + newStatus);
+        }
+
+        // 3. Apply state transition
+        paper.setReviewStatus(newStatus);
+
+        return paperRepository.save(paper);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Paper> findByReviewStatus(ReviewStatus status, Pageable pageable) {
+        return paperRepository.findByReviewStatus(status, pageable);
+    }
 }

@@ -2,6 +2,7 @@ package com.muawiyah.repository.service;
 
 import com.muawiyah.repository.dto.PaperSubmissionForm;
 import com.muawiyah.repository.model.Paper;
+import com.muawiyah.repository.model.ReviewStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -78,4 +79,26 @@ public interface PaperService {
      * @return the persisted updated Paper entity
      */
     Paper updatePaper(Long id, PaperSubmissionForm form, String currentUsername);
+
+    /**
+     * Executes a peer-review lifecycle state transition.
+     * Enforces domain state machine rules:
+     * - Rejects invalid jumps (e.g. SUBMITTED -> ACCEPTED).
+     * - Rejects transitions out of immutable terminal states (ACCEPTED, REJECTED).
+     *
+     * @param paperId          ID of the paper
+     * @param newStatus        target ReviewStatus to transition to
+     * @param reviewerUsername authenticated username of the reviewer
+     * @return the updated Paper entity
+     */
+    Paper updateReviewStatus(Long paperId, ReviewStatus newStatus, String reviewerUsername);
+
+    /**
+     * Returns a paginated list of papers matching a specific review status.
+     *
+     * @param status   the review status to filter by
+     * @param pageable page number, size, and sorting
+     * @return a Page of matching papers
+     */
+    Page<Paper> findByReviewStatus(ReviewStatus status, Pageable pageable);
 }

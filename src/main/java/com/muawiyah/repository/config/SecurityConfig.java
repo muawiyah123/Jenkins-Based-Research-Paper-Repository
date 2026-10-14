@@ -81,7 +81,7 @@ public class SecurityConfig {
                 .requestMatchers("/papers/*/edit").hasRole("RESEARCHER")
 
                 // Reviewer capabilities (Task 10)
-                .requestMatchers("/papers/*/review", "/papers/*/status").hasRole("REVIEWER")
+                .requestMatchers("/papers/review", "/papers/*/review", "/papers/*/status").hasRole("REVIEWER")
 
                 // Admin capabilities (Task 11)
                 .requestMatchers("/admin/**", "/dashboard/**").hasRole("ADMIN")
