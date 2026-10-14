@@ -65,9 +65,22 @@ pipeline {
             }
         }
 
+        stage('Selenium E2E Tests') {
+            steps {
+                echo '=== Stage 5: Running Headless Selenium UI Smoke Tests ==='
+                script {
+                    if (isUnix()) {
+                        sh './mvnw test -P e2e'
+                    } else {
+                        bat '.\\mvnw.cmd test -P e2e'
+                    }
+                }
+            }
+        }
+
         stage('Package Artifact') {
             steps {
-                echo '=== Stage 5: Packaging Spring Boot Executable JAR ==='
+                echo '=== Stage 6: Packaging Spring Boot Executable JAR ==='
                 script {
                     if (isUnix()) {
                         sh './mvnw package -DskipTests'
