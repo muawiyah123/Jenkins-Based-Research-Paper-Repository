@@ -1,5 +1,6 @@
 package com.muawiyah.repository.controller;
 
+import com.muawiyah.repository.dto.PaperSubmissionForm;
 import com.muawiyah.repository.model.Paper;
 import com.muawiyah.repository.model.ReviewStatus;
 import com.muawiyah.repository.service.PaperService;
@@ -226,5 +227,84 @@ class PaperControllerTest {
         mockMvc.perform(get("/papers/1"))
                .andExpect(status().isOk())
                .andExpect(content().string(not(containsString("secret-author@university.edu"))));
+    }
+
+    // ─── Edit & Resubmission tests (Task 8) ───────────────────────────────────
+
+    @Test
+    @DisplayName("GET /papers/{id}/edit should render edit view for eligible SUBMITTED paper")
+    void shouldRenderEditFormForEligiblePaper() throws Exception {
+        Paper paper = buildPaper(5L, "Editable Paper");
+        paper.setReviewStatus(ReviewStatus.SUBMITTED);
+        when(paperService.findById(5L)).thenReturn(Optional.of(paper));
+
+        mockMvc.perform(get("/papers/5/edit"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("papers/edit"))
+               .andExpect(model().attributeExists("paperForm"))
+               .andExpect(model().attributeExists("paperId"))
+               .andExpect(model().attributeExists("paper"));
+    }
+
+    @Test
+    @DisplayName("GET /papers/{id}/edit for non-existent paper should redirect to catalog")
+    void shouldRedirectWhenEditPaperNotFound() throws Exception {
+        when(paperService.findById(999L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/papers/999/edit"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/papers"))
+               .andExpect(flash().attributeExists("errorMessage"));
+    }
+
+    @Test
+    @DisplayName("GET /papers/{id}/edit for paper in ACCEPTED status should redirect to detail with error")
+    void shouldRedirectWhenEditingPaperInNonEditableStatus() throws Exception {
+        Paper paper = buildPaper(8L, "Accepted Paper");
+        paper.setReviewStatus(ReviewStatus.ACCEPTED);
+        when(paperService.findById(8L)).thenReturn(Optional.of(paper));
+
+        mockMvc.perform(get("/papers/8/edit"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/papers/8"))
+               .andExpect(flash().attributeExists("errorMessage"));
+    }
+
+    @Test
+    @DisplayName("POST /papers/{id}/edit with valid data should update and redirect to detail")
+    void shouldHandleValidEditSubmission() throws Exception {
+        Paper paper = buildPaper(5L, "Original Title");
+        paper.setReviewStatus(ReviewStatus.SUBMITTED);
+        when(paperService.findById(5L)).thenReturn(Optional.of(paper));
+
+        Paper updated = buildPaper(5L, "Revised Title");
+        when(paperService.updatePaper(eq(5L), any(PaperSubmissionForm.class), anyString())).thenReturn(updated);
+
+        mockMvc.perform(post("/papers/5/edit")
+                       .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                       .param("title", "Revised Title for Testing")
+                       .param("authors", "Test Author")
+                       .param("abstractText", "This is an updated abstract of sufficient length.")
+                       .param("keywords", "Spring Boot, Testing")
+                       .param("publicationYear", "2025")
+                       .param("submitterEmail", "author@test.com"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/papers/5"))
+               .andExpect(flash().attributeExists("successMessage"));
+    }
+
+    @Test
+    @DisplayName("POST /papers/{id}/edit with invalid data should re-render edit form")
+    void shouldReRenderEditFormWhenValidationFails() throws Exception {
+        Paper paper = buildPaper(5L, "Original Title");
+        when(paperService.findById(5L)).thenReturn(Optional.of(paper));
+
+        mockMvc.perform(post("/papers/5/edit")
+                       .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                       .param("title", "") // invalid: blank
+                       .param("authors", "Test Author"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("papers/edit"))
+               .andExpect(model().attributeHasFieldErrors("paperForm", "title"));
     }
 }

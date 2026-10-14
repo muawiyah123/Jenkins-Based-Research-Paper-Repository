@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -179,5 +180,106 @@ class PaperServiceTest {
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).getTitle()).isEqualTo("Machine Learning Paper");
         verify(paperRepository).searchByKeyword("machine", pageable);
+    }
+
+    // ─── updatePaper tests (Task 8) ───────────────────────────────────────────
+
+    @Test
+    @DisplayName("updatePaper should update metadata for paper in SUBMITTED status by author")
+    void shouldUpdatePaperWhenAuthorAndStatusAreValid() {
+        Paper existing = new Paper();
+        existing.setId(1L);
+        existing.setTitle("Old Title");
+        existing.setSubmitterUsername("researcher");
+        existing.setReviewStatus(ReviewStatus.SUBMITTED);
+
+        when(paperRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(paperRepository.save(any(Paper.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PaperSubmissionForm form = new PaperSubmissionForm();
+        form.setTitle("Updated Title");
+        form.setAuthors("Updated Authors");
+        form.setAbstractText("Updated abstract of sufficient length.");
+        form.setKeywords("Java, Testing");
+        form.setPublicationYear(2025);
+        form.setDoiUrl("https://doi.org/10.1234/updated");
+        form.setSubmitterEmail("new@email.com");
+
+        Paper updated = paperService.updatePaper(1L, form, "researcher");
+
+        assertThat(updated.getTitle()).isEqualTo("Updated Title");
+        assertThat(updated.getAuthors()).isEqualTo("Updated Authors");
+        assertThat(updated.getReviewStatus()).isEqualTo(ReviewStatus.SUBMITTED);
+        verify(paperRepository).save(existing);
+    }
+
+    @Test
+    @DisplayName("updatePaper should transition REVISION_REQUESTED paper to UNDER_REVIEW upon edit")
+    void shouldUpdateAndTransitionStatusWhenPaperInRevisionRequested() {
+        Paper existing = new Paper();
+        existing.setId(2L);
+        existing.setTitle("Initial Title");
+        existing.setSubmitterUsername("researcher");
+        existing.setReviewStatus(ReviewStatus.REVISION_REQUESTED);
+
+        when(paperRepository.findById(2L)).thenReturn(Optional.of(existing));
+        when(paperRepository.save(any(Paper.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PaperSubmissionForm form = PaperSubmissionForm.fromPaper(existing);
+        form.setTitle("Revised Title Addressing Reviewer Feedback");
+
+        Paper updated = paperService.updatePaper(2L, form, "researcher");
+
+        assertThat(updated.getTitle()).isEqualTo("Revised Title Addressing Reviewer Feedback");
+        assertThat(updated.getReviewStatus()).isEqualTo(ReviewStatus.UNDER_REVIEW);
+    }
+
+    @Test
+    @DisplayName("updatePaper should reject edits from non-author with IllegalStateException")
+    void shouldRejectUpdateWhenCallerIsNotAuthor() {
+        Paper existing = new Paper();
+        existing.setId(3L);
+        existing.setSubmitterUsername("original_author");
+        existing.setReviewStatus(ReviewStatus.SUBMITTED);
+
+        when(paperRepository.findById(3L)).thenReturn(Optional.of(existing));
+
+        PaperSubmissionForm form = new PaperSubmissionForm();
+        form.setTitle("Hacked Title");
+
+        assertThatThrownBy(() -> paperService.updatePaper(3L, form, "different_user"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Unauthorized");
+    }
+
+    @Test
+    @DisplayName("updatePaper should reject edits for paper in UNDER_REVIEW, ACCEPTED, or REJECTED status")
+    void shouldRejectUpdateWhenStatusIsNotEditable() {
+        Paper acceptedPaper = new Paper();
+        acceptedPaper.setId(4L);
+        acceptedPaper.setSubmitterUsername("researcher");
+        acceptedPaper.setReviewStatus(ReviewStatus.ACCEPTED);
+
+        when(paperRepository.findById(4L)).thenReturn(Optional.of(acceptedPaper));
+
+        PaperSubmissionForm form = new PaperSubmissionForm();
+        form.setTitle("Update to Accepted Paper");
+
+        assertThatThrownBy(() -> paperService.updatePaper(4L, form, "researcher"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot edit paper in status");
+    }
+
+    @Test
+    @DisplayName("updatePaper should throw IllegalArgumentException when paper does not exist")
+    void shouldThrowWhenPaperDoesNotExist() {
+        when(paperRepository.findById(999L)).thenReturn(Optional.empty());
+
+        PaperSubmissionForm form = new PaperSubmissionForm();
+        form.setTitle("Non-existent paper update");
+
+        assertThatThrownBy(() -> paperService.updatePaper(999L, form, "researcher"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Paper not found");
     }
 }
