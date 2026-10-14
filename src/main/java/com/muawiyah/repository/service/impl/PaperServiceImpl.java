@@ -5,8 +5,12 @@ import com.muawiyah.repository.model.Paper;
 import com.muawiyah.repository.model.ReviewStatus;
 import com.muawiyah.repository.repository.PaperRepository;
 import com.muawiyah.repository.service.PaperService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 /**
  * Implementation of PaperService.
@@ -56,5 +60,36 @@ public class PaperServiceImpl implements PaperService {
         // Always starts as SUBMITTED
         paper.setReviewStatus(ReviewStatus.SUBMITTED);
         return paperRepository.save(paper);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * readOnly = true is a performance optimisation for queries:
+     * Hibernate skips the dirty-checking snapshot, reducing memory usage.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Paper> findAll(Pageable pageable) {
+        return paperRepository.findAll(pageable);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Paper> findById(Long id) {
+        return paperRepository.findById(id);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Delegates to the custom JPQL query defined in PaperRepository
+     * which performs a case-insensitive substring search across three columns.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Paper> search(String keyword, Pageable pageable) {
+        return paperRepository.searchByKeyword(keyword, pageable);
     }
 }

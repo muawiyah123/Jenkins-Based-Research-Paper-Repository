@@ -43,6 +43,13 @@ public interface PaperRepository extends JpaRepository<Paper, Long> {
     Page<Paper> searchPapers(@Param("query") String query, Pageable pageable);
 
     /**
+     * Convenience alias for searchPapers matching service domain terminology.
+     */
+    default Page<Paper> searchByKeyword(String keyword, Pageable pageable) {
+        return searchPapers(keyword, pageable);
+    }
+
+    /**
      * Case-insensitive partial search with status filter.
      */
     @Query("SELECT p FROM Paper p WHERE " +

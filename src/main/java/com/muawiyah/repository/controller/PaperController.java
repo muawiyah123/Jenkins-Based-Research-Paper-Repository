@@ -4,19 +4,26 @@ import com.muawiyah.repository.dto.PaperSubmissionForm;
 import com.muawiyah.repository.model.Paper;
 import com.muawiyah.repository.service.PaperService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.util.Optional;
 
 /**
- * MVC Controller handling the research paper submission workflow.
+ * MVC Controller handling the research paper submission, catalog, and detail workflows.
  *
  * HOW SPRING MVC WORKS (beginner explanation):
  * 1. The browser sends a GET /papers/submit request.
@@ -31,17 +38,83 @@ import java.security.Principal;
  * 2. @Valid triggers Bean Validation (size, notBlank, email etc.).
  * 3. If validation fails, BindingResult.hasErrors() is true — we re-render the form
  *    with error messages visible. NO database write occurs.
- * 4. If validation passes, the service saves the paper and we redirect to home.
+ * 4. If validation passes, the service saves the paper and we redirect to the detail page.
  */
 @Controller
 @RequestMapping("/papers")
 public class PaperController {
+
+    private static final int PAGE_SIZE = 10;
 
     private final PaperService paperService;
 
     public PaperController(PaperService paperService) {
         this.paperService = paperService;
     }
+
+    // ─── Catalog ──────────────────────────────────────────────────────────────
+
+    /**
+     * Renders the public paper catalog with optional keyword search.
+     * GET /papers                     → all papers, newest first
+     * GET /papers?q=keyword           → search results
+     * GET /papers?page=1              → second page of results
+     * GET /papers?q=keyword&page=1    → second page of search results
+     *
+     * HOW PAGINATION WORKS:
+     * PageRequest.of(page, size, sort) tells Spring Data to execute a SELECT
+     * with LIMIT (size) and OFFSET (page * size). The Page<Paper> it returns
+     * also contains total count, total pages, and navigation flags that
+     * Thymeleaf uses to render the pagination controls.
+     */
+    @GetMapping
+    public String showCatalog(
+            @RequestParam(value = "q",    required = false)  String query,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(
+                Math.max(page, 0), PAGE_SIZE,
+                Sort.by("createdAt").descending());
+
+        String trimmedQuery = (query != null && !query.isBlank()) ? query.trim() : "";
+        Page<Paper> papers = trimmedQuery.isEmpty()
+                ? paperService.findAll(pageable)
+                : paperService.search(trimmedQuery, pageable);
+
+        model.addAttribute("papers",    papers);
+        model.addAttribute("query",     trimmedQuery);
+        model.addAttribute("pageTitle", "Research Paper Catalog");
+        return "papers/catalog";
+    }
+
+    // ─── Detail ───────────────────────────────────────────────────────────────
+
+    /**
+     * Renders the detail page for a single paper.
+     * GET /papers/{id}
+     *
+     * If the paper does not exist (wrong ID or deleted), the user is redirected
+     * to the catalog with a clear error flash message instead of seeing a
+     * generic 500 error page.
+     */
+    @GetMapping("/{id}")
+    public String showPaperDetail(@PathVariable Long id,
+                                  Model model,
+                                  RedirectAttributes redirectAttributes) {
+        Optional<Paper> paperOpt = paperService.findById(id);
+        if (paperOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Paper with ID " + id + " was not found in the repository.");
+            return "redirect:/papers";
+        }
+        Paper paper = paperOpt.get();
+        model.addAttribute("paper",     paper);
+        model.addAttribute("pageTitle", paper.getTitle());
+        return "papers/detail";
+    }
+
+    // ─── Submission ───────────────────────────────────────────────────────────
 
     /**
      * Renders the empty submission form.
@@ -80,7 +153,6 @@ public class PaperController {
         // Security note:
         // Principal is null here because authentication (Task 9) is not yet implemented.
         // We use the placeholder "researcher" until Spring Security is configured.
-        // After Task 9, replace this with: principal.getName()
         // TODO Task 9: replace placeholder with principal.getName()
         String submitterUsername = (principal != null) ? principal.getName() : "researcher";
 
@@ -88,11 +160,10 @@ public class PaperController {
 
         // Flash attributes survive a redirect and are then removed automatically.
         redirectAttributes.addFlashAttribute("successMessage",
-                "Paper \"" + saved.getTitle() + "\" has been submitted successfully (ID: " + saved.getId() + ").");
+                "Paper submitted successfully! Your paper ID is #" + saved.getId() +
+                ". It will appear in the catalog once it is accepted by a reviewer.");
 
-        // Redirect to home. When Task 7 builds the paper detail page,
-        // this will change to: "redirect:/papers/" + saved.getId()
-        // TODO Task 7: redirect to paper detail page once catalog is built
-        return "redirect:/";
+        // Redirect to the detail page so the researcher can review what was saved.
+        return "redirect:/papers/" + saved.getId();
     }
 }

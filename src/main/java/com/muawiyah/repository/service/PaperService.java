@@ -2,6 +2,10 @@ package com.muawiyah.repository.service;
 
 import com.muawiyah.repository.dto.PaperSubmissionForm;
 import com.muawiyah.repository.model.Paper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.Optional;
 
 /**
  * Service interface for research paper business operations.
@@ -13,7 +17,7 @@ import com.muawiyah.repository.model.Paper;
  * 2. Replace the implementation in future (e.g. swap H2 for PostgreSQL) without
  *    changing any controller or test code.
  *
- * Methods will be added here task by task as features are implemented.
+ * Methods are added task by task as features are implemented.
  */
 public interface PaperService {
 
@@ -29,4 +33,31 @@ public interface PaperService {
      * @return the persisted Paper entity with generated ID and timestamps
      */
     Paper submitPaper(PaperSubmissionForm form, String submitterUsername);
+
+    /**
+     * Returns a paginated list of all papers, newest first.
+     * Used by the public catalog when no search query is present.
+     *
+     * @param pageable page number, size, and sort direction
+     * @return a Spring Data Page wrapping the result list
+     */
+    Page<Paper> findAll(Pageable pageable);
+
+    /**
+     * Finds a single paper by its primary key.
+     *
+     * @param id database-generated paper ID
+     * @return Optional containing the paper, or empty if not found
+     */
+    Optional<Paper> findById(Long id);
+
+    /**
+     * Searches papers by keyword across title, authors, and keywords fields.
+     * The search is case-insensitive and uses a substring match.
+     *
+     * @param keyword  search term entered by the user
+     * @param pageable page number, size, and sort direction
+     * @return a Page of matching papers
+     */
+    Page<Paper> search(String keyword, Pageable pageable);
 }
