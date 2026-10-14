@@ -1,5 +1,6 @@
 package com.muawiyah.repository.controller;
 
+import com.muawiyah.repository.config.SecurityConfig;
 import com.muawiyah.repository.dto.PaperSubmissionForm;
 import com.muawiyah.repository.model.Paper;
 import com.muawiyah.repository.model.ReviewStatus;
@@ -9,10 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -22,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.hamcrest.Matchers.containsString;
@@ -37,25 +41,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Controller slice tests for PaperController.
  *
- * @WebMvcTest(PaperController.class) — boots only the web layer (no JPA, no database).
- * @MockBean PaperService — replaces the real service with a mock so no data is saved.
- *
- * This verifies:
- * SUBMISSION WORKFLOW
- * 1. GET /papers/submit renders the form correctly.
- * 2. A valid POST redirects to the paper detail page with a flash success message.
- * 3. An invalid POST re-renders the form with field-level errors.
- * 4. An invalid email re-renders the form with an email error.
- *
- * CATALOG
- * 5. GET /papers returns the catalog view with a papers model attribute.
- * 6. GET /papers?q=keyword returns filtered search results.
- *
- * DETAIL
- * 7. GET /papers/{id} for an existing paper returns the detail view.
- * 8. GET /papers/{id} for a non-existent paper redirects to /papers with an error flash.
+ * @WebMvcTest(PaperController.class) — boots only the web layer.
+ * @Import(SecurityConfig.class) — includes our role-based security rules.
  */
 @WebMvcTest(PaperController.class)
+@Import(SecurityConfig.class)
 class PaperControllerTest {
 
     @Autowired
@@ -83,6 +73,7 @@ class PaperControllerTest {
     // ─── Submission tests ─────────────────────────────────────────────────────
 
     @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
     @DisplayName("GET /papers/submit should return HTTP 200 with empty form and correct view")
     void shouldRenderSubmitFormOnGetRequest() throws Exception {
         mockMvc.perform(get("/papers/submit"))
@@ -93,12 +84,13 @@ class PaperControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
     @DisplayName("POST /papers/submit with valid data should redirect to detail page with success flash")
     void shouldRedirectToDetailPageOnValidSubmission() throws Exception {
         Paper mockPaper = buildPaper(5L, "Valid Submission Title Here");
         when(paperService.submitPaper(any(), anyString())).thenReturn(mockPaper);
 
-        mockMvc.perform(post("/papers/submit")
+        mockMvc.perform(post("/papers/submit").with(csrf())
                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                .param("title", "Valid Submission Title Here")
                .param("authors", "Test Author Name")
@@ -112,9 +104,10 @@ class PaperControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
     @DisplayName("POST /papers/submit with blank required fields should re-render form with errors")
     void shouldReRenderFormWhenRequiredFieldsAreMissing() throws Exception {
-        mockMvc.perform(post("/papers/submit")
+        mockMvc.perform(post("/papers/submit").with(csrf())
                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                .param("title", "")
                .param("authors", "")
@@ -128,9 +121,10 @@ class PaperControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
     @DisplayName("POST /papers/submit with invalid email should re-render form with email error")
     void shouldRejectInvalidEmailFormat() throws Exception {
-        mockMvc.perform(post("/papers/submit")
+        mockMvc.perform(post("/papers/submit").with(csrf())
                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                .param("title", "Valid Title That Is Long Enough")
                .param("authors", "Valid Author")
@@ -232,6 +226,7 @@ class PaperControllerTest {
     // ─── Edit & Resubmission tests (Task 8) ───────────────────────────────────
 
     @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
     @DisplayName("GET /papers/{id}/edit should render edit view for eligible SUBMITTED paper")
     void shouldRenderEditFormForEligiblePaper() throws Exception {
         Paper paper = buildPaper(5L, "Editable Paper");
@@ -247,6 +242,7 @@ class PaperControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
     @DisplayName("GET /papers/{id}/edit for non-existent paper should redirect to catalog")
     void shouldRedirectWhenEditPaperNotFound() throws Exception {
         when(paperService.findById(999L)).thenReturn(Optional.empty());
@@ -258,6 +254,7 @@ class PaperControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
     @DisplayName("GET /papers/{id}/edit for paper in ACCEPTED status should redirect to detail with error")
     void shouldRedirectWhenEditingPaperInNonEditableStatus() throws Exception {
         Paper paper = buildPaper(8L, "Accepted Paper");
@@ -271,6 +268,7 @@ class PaperControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
     @DisplayName("POST /papers/{id}/edit with valid data should update and redirect to detail")
     void shouldHandleValidEditSubmission() throws Exception {
         Paper paper = buildPaper(5L, "Original Title");
@@ -280,7 +278,7 @@ class PaperControllerTest {
         Paper updated = buildPaper(5L, "Revised Title");
         when(paperService.updatePaper(eq(5L), any(PaperSubmissionForm.class), anyString())).thenReturn(updated);
 
-        mockMvc.perform(post("/papers/5/edit")
+        mockMvc.perform(post("/papers/5/edit").with(csrf())
                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                        .param("title", "Revised Title for Testing")
                        .param("authors", "Test Author")
@@ -294,17 +292,44 @@ class PaperControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
     @DisplayName("POST /papers/{id}/edit with invalid data should re-render edit form")
     void shouldReRenderEditFormWhenValidationFails() throws Exception {
         Paper paper = buildPaper(5L, "Original Title");
         when(paperService.findById(5L)).thenReturn(Optional.of(paper));
 
-        mockMvc.perform(post("/papers/5/edit")
+        mockMvc.perform(post("/papers/5/edit").with(csrf())
                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                        .param("title", "") // invalid: blank
                        .param("authors", "Test Author"))
                .andExpect(status().isOk())
                .andExpect(view().name("papers/edit"))
                .andExpect(model().attributeHasFieldErrors("paperForm", "title"));
+    }
+
+    // ─── Security Role Guard Tests (Task 9 - US-009) ──────────────────────────
+
+    @Test
+    @DisplayName("Anonymous user accessing GET /papers/submit should redirect to login")
+    void shouldRedirectAnonymousUserToLoginOnProtectedSubmit() throws Exception {
+        mockMvc.perform(get("/papers/submit"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrlPattern("**/login"));
+    }
+
+    @Test
+    @WithMockUser(username = "reviewer", roles = "REVIEWER")
+    @DisplayName("Reviewer accessing researcher-only GET /papers/submit should receive 403 Forbidden")
+    void shouldForbiddenReviewerFromPaperSubmission() throws Exception {
+        mockMvc.perform(get("/papers/submit"))
+               .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "reviewer", roles = "REVIEWER")
+    @DisplayName("Reviewer accessing researcher-only GET /papers/{id}/edit should receive 403 Forbidden")
+    void shouldForbiddenReviewerFromPaperEditing() throws Exception {
+        mockMvc.perform(get("/papers/1/edit"))
+               .andExpect(status().isForbidden());
     }
 }
