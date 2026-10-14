@@ -259,4 +259,77 @@ public class PaperController {
             return "redirect:/papers/" + id;
         }
     }
+
+    // ─── Peer-Review Workflow (Task 10 - US-007) ──────────────────────────────
+
+    /**
+     * Renders the reviewer portal dashboard listing papers for evaluation.
+     * GET /papers/review
+     */
+    @GetMapping("/review")
+    public String showReviewPortal(@RequestParam(required = false) ReviewStatus status,
+                                   @RequestParam(defaultValue = "0") int page,
+                                   Model model) {
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Paper> papers = (status != null)
+                ? paperService.findByReviewStatus(status, pageable)
+                : paperService.findAll(pageable);
+
+        model.addAttribute("papers", papers);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("allStatuses", ReviewStatus.values());
+        model.addAttribute("pageTitle", "Peer-Review Management Portal");
+        return "papers/review-portal";
+    }
+
+    /**
+     * Renders the evaluation and state-transition form for a specific paper.
+     * GET /papers/{id}/review
+     */
+    @GetMapping("/{id}/review")
+    public String showReviewActionForm(@PathVariable Long id,
+                                       RedirectAttributes redirectAttributes,
+                                       Model model) {
+        Optional<Paper> paperOpt = paperService.findById(id);
+        if (paperOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Paper #" + id + " does not exist.");
+            return "redirect:/papers/review";
+        }
+
+        Paper paper = paperOpt.get();
+        if (paper.getReviewStatus().isTerminal()) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Paper #" + id + " is in terminal status (" + paper.getReviewStatus().getDisplayName() +
+                    ") and can no longer be transitioned.");
+            return "redirect:/papers/" + id;
+        }
+
+        model.addAttribute("paper", paper);
+        model.addAttribute("permittedNextStates", paper.getReviewStatus().getPermittedNextStates());
+        model.addAttribute("pageTitle", "Review Paper #" + id);
+        return "papers/review";
+    }
+
+    /**
+     * Processes review status transitions submitted by a reviewer.
+     * POST /papers/{id}/status
+     */
+    @PostMapping("/{id}/status")
+    public String handleStatusTransition(@PathVariable Long id,
+                                         @RequestParam ReviewStatus status,
+                                         @RequestParam(required = false) String comments,
+                                         Principal principal,
+                                         RedirectAttributes redirectAttributes) {
+        String reviewerUsername = (principal != null) ? principal.getName() : "reviewer";
+
+        try {
+            Paper updated = paperService.updateReviewStatus(id, status, reviewerUsername);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Paper #" + id + " review status updated to: " + updated.getReviewStatus().getDisplayName());
+            return "redirect:/papers/" + id;
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/papers/" + id + "/review";
+        }
+    }
 }

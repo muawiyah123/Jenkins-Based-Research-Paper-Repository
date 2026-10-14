@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} + ' — Research Paper Repository'">Review Paper — Research Paper Repository</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            padding: 2.5rem 0;
+            border-bottom: 1px solid #334155;
+        }
+        .review-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            background: #ffffff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+        }
+        .status-badge-inline {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            display: inline-block;
+        }
+        .state-chip {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+        }
+        .footer {
+            background-color: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            padding: 2.5rem 0;
+            margin-top: 5rem;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span class="fw-bold">Paper Repository</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navContent">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/papers">Catalog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active fw-semibold text-primary" href="/papers/review">Review Portal</a>
+                    </li>
+                    <li class="nav-item ms-lg-2" sec:authorize="isAuthenticated()">
+                        <form th:action="@{/logout}" method="post" class="d-inline m-0">
+                            <button type="submit" class="btn btn-outline-danger btn-sm py-1 px-2">Sign Out</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="page-header">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge bg-light text-dark fw-bold" th:text="'Paper #' + ${paper.id}">Paper #1</span>
+                        <span class="status-badge-inline"
+                              th:classappend="${paper.reviewStatus.badgeClass}"
+                              th:text="${paper.reviewStatus.displayName}">SUBMITTED</span>
+                    </div>
+                    <h1 class="h3 fw-bold mb-1" th:text="${paper.title}">Paper Title</h1>
+                    <p class="text-white-50 mb-0" th:text="'Authors: ' + ${paper.authors}">Authors</p>
+                </div>
+                <a th:href="@{'/papers/' + ${paper.id}}" class="btn btn-outline-light btn-sm">
+                    &larr; View Paper Details
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="container my-5">
+        <div class="row g-4 justify-content-center">
+
+            <!-- Left: Paper Summary Card -->
+            <div class="col-lg-7">
+                <div class="review-card p-4 mb-4">
+                    <p class="section-label mb-2">Abstract for Review</p>
+                    <p class="text-secondary lh-base mb-4" th:text="${paper.abstractText}">Abstract content...</p>
+
+                    <div class="row g-3 pt-3 border-top">
+                        <div class="col-sm-6">
+                            <span class="section-label d-block mb-1">Keywords</span>
+                            <span class="small fw-semibold text-dark" th:text="${paper.keywords}">Keywords</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="section-label d-block mb-1">Publication Year</span>
+                            <span class="small fw-semibold text-dark" th:text="${paper.publicationYear}">2025</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="section-label d-block mb-1">Submitted By</span>
+                            <span class="small fw-semibold text-dark" th:text="${paper.submitterUsername}">researcher</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <span class="section-label d-block mb-1">Submitter Contact</span>
+                            <span class="small text-muted fst-italic" th:text="${paper.submitterEmail}">private@email.com</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: State Machine Action Card -->
+            <div class="col-lg-5">
+                <div class="review-card p-4">
+                    <h2 class="h5 fw-bold mb-3 d-flex align-items-center gap-2">
+                        <svg width="20" height="20" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        Formal Decision Action
+                    </h2>
+
+                    <!-- State Machine Notice -->
+                    <div class="p-3 bg-light rounded-3 mb-4 border">
+                        <div class="small fw-bold text-dark mb-1">Current State:</div>
+                        <div class="mb-2">
+                            <span class="status-badge-inline"
+                                  th:classappend="${paper.reviewStatus.badgeClass}"
+                                  th:text="${paper.reviewStatus.displayName}">SUBMITTED</span>
+                        </div>
+                        <div class="small text-muted">
+                            Permitted transitions enforced by the domain state machine:
+                        </div>
+                        <ul class="small mb-0 ps-3 mt-1 text-secondary">
+                            <li th:each="st : ${permittedNextStates}" th:text="${st.displayName}">Next State</li>
+                        </ul>
+                    </div>
+
+                    <!-- Decision Form -->
+                    <form th:action="@{'/papers/' + ${paper.id} + '/status'}" method="post">
+                        <!-- CSRF automatically included by Thymeleaf -->
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label fw-semibold small">
+                                Transition to Status <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="" disabled selected>-- Select Next Status --</option>
+                                <option th:each="st : ${permittedNextStates}"
+                                        th:value="${st.name()}"
+                                        th:text="${st.displayName}">
+                                    Under Review
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="comments" class="form-label fw-semibold small">
+                                Reviewer Remarks / Feedback
+                            </label>
+                            <textarea class="form-control"
+                                      id="comments"
+                                      name="comments"
+                                      rows="3"
+                                      placeholder="Provide notes for the author or internal review trail…"></textarea>
+                            <div class="form-text small">Required when requesting revisions to guide author updates.</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary fw-semibold py-2">
+                                Confirm State Transition
+                            </button>
+                            <a th:href="@{'/papers/' + ${paper.id}}" class="btn btn-outline-secondary btn-sm">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-1 fw-semibold text-dark">
+                Jenkins-Based Research Paper Repository &bull; Peer-Review Lifecycle
+            </p>
+            <p class="mb-0 text-muted">
+                Muawiyah Narvel | Roll No: 23108A0020 | Java 21 LTS | Spring Boot 3.4.3
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

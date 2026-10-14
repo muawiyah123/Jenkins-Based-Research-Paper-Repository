@@ -332,4 +332,132 @@ class PaperControllerTest {
         mockMvc.perform(get("/papers/1/edit"))
                .andExpect(status().isForbidden());
     }
+
+    // ─── Peer-Review Workflow Tests (Task 10 - US-006, US-007) ───────────────
+
+    @Test
+    @WithMockUser(username = "reviewer", roles = "REVIEWER")
+    @DisplayName("GET /papers/review should render review portal with submissions")
+    void shouldRenderReviewPortalForReviewer() throws Exception {
+        Paper p = buildPaper(1L, "Manuscript Under Review");
+        Page<Paper> page = new PageImpl<>(List.of(p), PageRequest.of(0, 10), 1);
+        when(paperService.findAll(any())).thenReturn(page);
+
+        mockMvc.perform(get("/papers/review"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("papers/review-portal"))
+               .andExpect(model().attributeExists("papers"))
+               .andExpect(model().attributeExists("allStatuses"))
+               .andExpect(model().attributeExists("pageTitle"));
+    }
+
+    @Test
+    @WithMockUser(username = "reviewer", roles = "REVIEWER")
+    @DisplayName("GET /papers/review?status=UNDER_REVIEW should filter papers by review status")
+    void shouldFilterReviewPortalByStatus() throws Exception {
+        Paper p = buildPaper(2L, "Under Review Paper");
+        p.setReviewStatus(ReviewStatus.UNDER_REVIEW);
+        Page<Paper> page = new PageImpl<>(List.of(p), PageRequest.of(0, 10), 1);
+        when(paperService.findByReviewStatus(eq(ReviewStatus.UNDER_REVIEW), any())).thenReturn(page);
+
+        mockMvc.perform(get("/papers/review").param("status", "UNDER_REVIEW"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("papers/review-portal"))
+               .andExpect(model().attribute("selectedStatus", ReviewStatus.UNDER_REVIEW));
+    }
+
+    @Test
+    @WithMockUser(username = "reviewer", roles = "REVIEWER")
+    @DisplayName("GET /papers/{id}/review should render review form for active non-terminal paper")
+    void shouldRenderReviewFormForActivePaper() throws Exception {
+        Paper p = buildPaper(3L, "Paper Ready for Review");
+        p.setReviewStatus(ReviewStatus.SUBMITTED);
+        when(paperService.findById(3L)).thenReturn(Optional.of(p));
+
+        mockMvc.perform(get("/papers/3/review"))
+               .andExpect(status().isOk())
+               .andExpect(view().name("papers/review"))
+               .andExpect(model().attributeExists("paper"))
+               .andExpect(model().attributeExists("permittedNextStates"));
+    }
+
+    @Test
+    @WithMockUser(username = "reviewer", roles = "REVIEWER")
+    @DisplayName("GET /papers/{id}/review for terminal paper should redirect to detail with error flash")
+    void shouldRedirectWhenReviewingTerminalPaper() throws Exception {
+        Paper p = buildPaper(4L, "Accepted Paper");
+        p.setReviewStatus(ReviewStatus.ACCEPTED);
+        when(paperService.findById(4L)).thenReturn(Optional.of(p));
+
+        mockMvc.perform(get("/papers/4/review"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/papers/4"))
+               .andExpect(flash().attributeExists("errorMessage"));
+    }
+
+    @Test
+    @WithMockUser(username = "reviewer", roles = "REVIEWER")
+    @DisplayName("POST /papers/{id}/status with valid transition should redirect to detail with success flash")
+    void shouldHandleValidStatusTransition() throws Exception {
+        Paper updated = buildPaper(5L, "Updated Paper");
+        updated.setReviewStatus(ReviewStatus.UNDER_REVIEW);
+        when(paperService.updateReviewStatus(eq(5L), eq(ReviewStatus.UNDER_REVIEW), anyString())).thenReturn(updated);
+
+        mockMvc.perform(post("/papers/5/status").with(csrf())
+                       .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                       .param("status", "UNDER_REVIEW")
+                       .param("comments", "Proceeding with review"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/papers/5"))
+               .andExpect(flash().attributeExists("successMessage"));
+    }
+
+    @Test
+    @WithMockUser(username = "reviewer", roles = "REVIEWER")
+    @DisplayName("POST /papers/{id}/status when service throws IllegalStateException should redirect to review form with error")
+    void shouldRedirectToReviewFormOnIllegalTransition() throws Exception {
+        when(paperService.updateReviewStatus(eq(6L), eq(ReviewStatus.ACCEPTED), anyString()))
+                .thenThrow(new IllegalStateException("Cannot transition review status from SUBMITTED to ACCEPTED"));
+
+        mockMvc.perform(post("/papers/6/status").with(csrf())
+                       .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                       .param("status", "ACCEPTED"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrl("/papers/6/review"))
+               .andExpect(flash().attributeExists("errorMessage"));
+    }
+
+    @Test
+    @DisplayName("Anonymous user accessing review portal GET /papers/review should redirect to login")
+    void shouldRedirectAnonymousUserToLoginOnReviewPortal() throws Exception {
+        mockMvc.perform(get("/papers/review"))
+               .andExpect(status().is3xxRedirection())
+               .andExpect(redirectedUrlPattern("**/login"));
+    }
+
+    @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
+    @DisplayName("Researcher accessing reviewer-only GET /papers/review should receive 403 Forbidden")
+    void shouldForbiddenResearcherFromReviewPortal() throws Exception {
+        mockMvc.perform(get("/papers/review"))
+               .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
+    @DisplayName("Researcher accessing reviewer-only GET /papers/{id}/review should receive 403 Forbidden")
+    void shouldForbiddenResearcherFromPaperReviewForm() throws Exception {
+        mockMvc.perform(get("/papers/1/review"))
+               .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "researcher", roles = "RESEARCHER")
+    @DisplayName("Researcher attempting POST /papers/{id}/status should receive 403 Forbidden")
+    void shouldForbiddenResearcherFromStatusTransitionPost() throws Exception {
+        mockMvc.perform(post("/papers/1/status").with(csrf())
+                       .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                       .param("status", "UNDER_REVIEW"))
+               .andExpect(status().isForbidden());
+    }
 }
