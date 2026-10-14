@@ -101,4 +101,26 @@ public interface PaperService {
      * @return a Page of matching papers
      */
     Page<Paper> findByReviewStatus(ReviewStatus status, Pageable pageable);
+
+    /**
+     * Counts the total number of research papers stored in the repository.
+     *
+     * @return total count of all papers
+     */
+    long countTotalPapers();
+
+    /**
+     * Aggregates paper counts across all five review statuses for the dashboard.
+     *
+     * @return map of ReviewStatus to paper count
+     */
+    java.util.Map<ReviewStatus, Long> getReviewStatusCounts();
+
+    /**
+     * Retrieves the most recent papers for dashboard display.
+     *
+     * @param limit maximum number of papers to retrieve
+     * @return list of recent Paper entities
+     */
+    java.util.List<Paper> getRecentSubmissions(int limit);
 }

@@ -166,4 +166,37 @@ public class PaperServiceImpl implements PaperService {
     public Page<Paper> findByReviewStatus(ReviewStatus status, Pageable pageable) {
         return paperRepository.findByReviewStatus(status, pageable);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public long countTotalPapers() {
+        return paperRepository.count();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Map<ReviewStatus, Long> getReviewStatusCounts() {
+        java.util.Map<ReviewStatus, Long> counts = new java.util.EnumMap<>(ReviewStatus.class);
+        for (ReviewStatus status : ReviewStatus.values()) {
+            counts.put(status, paperRepository.countByReviewStatus(status));
+        }
+        return counts;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<Paper> getRecentSubmissions(int limit) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        return paperRepository.findAll(pageable).getContent();
+    }
 }
