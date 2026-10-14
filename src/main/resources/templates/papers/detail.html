@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" th:content="${#strings.abbreviate(paper.abstractText, 160)}">
+    <title th:text="${pageTitle} + ' — Research Paper Repository'">Paper Detail — Research Paper Repository</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #0f172a !important;
+            letter-spacing: -0.025em;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            padding: 2.5rem 0;
+            border-bottom: 1px solid #334155;
+        }
+        .detail-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+        }
+        .meta-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+        }
+        .section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 0.4rem;
+        }
+        .abstract-text {
+            line-height: 1.8;
+            color: #334155;
+        }
+        .keyword-chip {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            border-radius: 99px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+            margin: 0.2rem;
+        }
+        .status-badge-lg {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 0.45em 0.9em;
+            border-radius: 0.4rem;
+        }
+        .meta-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .meta-row:last-child { border-bottom: none; }
+        .meta-icon {
+            flex-shrink: 0;
+            width: 36px; height: 36px;
+            background: #f1f5f9;
+            border-radius: 0.4rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .meta-label { font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.1rem; }
+        .meta-value { font-size: 0.9rem; font-weight: 600; color: #1e293b; }
+        .privacy-note {
+            background: #fefce8;
+            border: 1px solid #fde68a;
+            border-radius: 0.5rem;
+            padding: 0.65rem 1rem;
+            font-size: 0.8rem;
+            color: #92400e;
+        }
+        .nav-link.disabled-planned {
+            color: #94a3b8 !important;
+            cursor: not-allowed;
+        }
+        .badge-phase {
+            font-size: 0.7rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .footer {
+            background-color: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            padding: 2.5rem 0;
+            margin-top: 5rem;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <svg class="me-2 text-primary" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+                    <path d="M6 6h10"></path><path d="M6 10h10"></path>
+                </svg>
+                <span>Research Paper Repository</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="/papers">Catalog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="/papers/submit">Submit Paper</a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link disabled-planned" title="Scheduled for Week 6">
+                            Review Portal <span class="badge bg-secondary badge-phase ms-1">Week 6</span>
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link disabled-planned" title="Scheduled for Week 7">
+                            Dashboard <span class="badge bg-secondary badge-phase ms-1">Week 7</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="page-header">
+        <div class="container">
+            <nav aria-label="breadcrumb" class="mb-2">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="/" class="text-decoration-none" style="color: #94a3b8;">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="/papers" class="text-decoration-none" style="color: #94a3b8;">Catalog</a>
+                    </li>
+                    <li class="breadcrumb-item active" style="color: #e2e8f0;" aria-current="page">
+                        Paper #<span th:text="${paper.id}"></span>
+                    </li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-start gap-3 flex-wrap">
+                <div class="flex-grow-1">
+                    <h1 class="h4 fw-bold mb-1 lh-sm" th:text="${paper.title}">Paper Title</h1>
+                    <p class="mb-0 opacity-75" th:text="${paper.authors}">Authors</p>
+                </div>
+                <!-- Status badge in header -->
+                <div class="flex-shrink-0 pt-1">
+                    <span class="status-badge-lg badge"
+                          th:classappend="${paper.reviewStatus.badgeClass}"
+                          th:text="${paper.reviewStatus.displayName}">
+                        STATUS
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container my-5">
+
+        <!-- Success flash message (shown after a successful submission redirect) -->
+        <div th:if="${successMessage}"
+             class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <svg class="me-2" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+                 viewBox="0 0 24 24">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- ── Main column: abstract + keywords ──────────────────────── -->
+            <div class="col-lg-8">
+
+                <!-- Abstract -->
+                <div class="detail-card p-4 mb-4">
+                    <p class="section-label">Abstract</p>
+                    <p class="abstract-text mb-0" th:text="${paper.abstractText}">Abstract text here.</p>
+                </div>
+
+                <!-- Keywords -->
+                <div class="detail-card p-4">
+                    <p class="section-label mb-3">Keywords</p>
+                    <!-- Each keyword becomes a chip; split on comma -->
+                    <div>
+                        <span th:each="kw : ${#strings.arraySplit(paper.keywords, ',')}"
+                              class="keyword-chip"
+                              th:text="${#strings.trim(kw)}">keyword</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ── Sidebar: metadata ──────────────────────────────────────── -->
+            <div class="col-lg-4">
+                <div class="meta-card p-3">
+
+                    <!-- Review Status -->
+                    <div class="meta-row">
+                        <div class="meta-icon">
+                            <svg width="16" height="16" fill="none" stroke="#64748b" stroke-width="2"
+                                 viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="meta-label">Review Status</div>
+                            <span class="status-badge-lg badge"
+                                  th:classappend="${paper.reviewStatus.badgeClass}"
+                                  th:text="${paper.reviewStatus.displayName}">
+                                STATUS
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Publication Year -->
+                    <div class="meta-row">
+                        <div class="meta-icon">
+                            <svg width="16" height="16" fill="none" stroke="#64748b" stroke-width="2"
+                                 viewBox="0 0 24 24">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8"  y1="2" x2="8"  y2="6"></line>
+                                <line x1="3"  y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="meta-label">Publication Year</div>
+                            <div class="meta-value" th:text="${paper.publicationYear}">2024</div>
+                        </div>
+                    </div>
+
+                    <!-- Submitted By -->
+                    <div class="meta-row">
+                        <div class="meta-icon">
+                            <svg width="16" height="16" fill="none" stroke="#64748b" stroke-width="2"
+                                 viewBox="0 0 24 24">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="meta-label">Submitted By</div>
+                            <div class="meta-value" th:text="${paper.submitterUsername}">researcher</div>
+                        </div>
+                    </div>
+
+                    <!-- Submission Date -->
+                    <div class="meta-row">
+                        <div class="meta-icon">
+                            <svg width="16" height="16" fill="none" stroke="#64748b" stroke-width="2"
+                                 viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="meta-label">Submission Date</div>
+                            <div class="meta-value"
+                                 th:text="${#temporals.format(paper.createdAt, 'dd MMM yyyy')}">01 Jan 2025</div>
+                        </div>
+                    </div>
+
+                    <!-- Last Updated -->
+                    <div class="meta-row" th:if="${paper.updatedAt != null}">
+                        <div class="meta-icon">
+                            <svg width="16" height="16" fill="none" stroke="#64748b" stroke-width="2"
+                                 viewBox="0 0 24 24">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="meta-label">Last Updated</div>
+                            <div class="meta-value"
+                                 th:text="${#temporals.format(paper.updatedAt, 'dd MMM yyyy')}">01 Jan 2025</div>
+                        </div>
+                    </div>
+
+                    <!-- DOI / URL -->
+                    <div class="meta-row" th:if="${paper.doiUrl != null and !#strings.isEmpty(paper.doiUrl)}">
+                        <div class="meta-icon">
+                            <svg width="16" height="16" fill="none" stroke="#64748b" stroke-width="2"
+                                 viewBox="0 0 24 24">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                            </svg>
+                        </div>
+                        <div style="min-width: 0;">
+                            <div class="meta-label">DOI / URL</div>
+                            <a th:href="${paper.doiUrl}" target="_blank" rel="noopener noreferrer"
+                               class="meta-value text-primary text-decoration-none d-block text-truncate"
+                               style="font-size:0.8rem; font-weight:500;"
+                               th:text="${paper.doiUrl}">https://doi.org/…</a>
+                        </div>
+                    </div>
+
+                    <!-- Paper ID -->
+                    <div class="meta-row">
+                        <div class="meta-icon">
+                            <svg width="16" height="16" fill="none" stroke="#64748b" stroke-width="2"
+                                 viewBox="0 0 24 24">
+                                <rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect>
+                                <path d="M7 12h10M7 8h10M7 16h6"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="meta-label">Repository ID</div>
+                            <div class="meta-value" th:text="'#' + ${paper.id}">#1</div>
+                        </div>
+                    </div>
+
+                    <!-- Privacy note: email is never shown -->
+                    <div class="privacy-note mt-3">
+                        <svg class="me-1" width="12" height="12" fill="none" stroke="currentColor"
+                             stroke-width="2" viewBox="0 0 24 24">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        Submitter contact email is private and not displayed publicly.
+                    </div>
+                </div>
+
+                <!-- Back button -->
+                <a href="/papers" class="btn btn-outline-secondary w-100 mt-3">
+                    &larr; Back to Catalog
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-1 fw-semibold text-dark">
+                Jenkins-Based Research Paper Repository &bull; Academic Project
+            </p>
+            <p class="mb-0 text-muted">
+                Muawiyah Narvel | Roll No: 23108A0020 | Java 21 LTS | Spring Boot 3.4.3
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -40,4 +40,17 @@ public enum ReviewStatus {
     public boolean isTerminal() {
         return this == ACCEPTED || this == REJECTED;
     }
+
+    /**
+     * Returns the Bootstrap badge CSS class for this status.
+     */
+    public String getBadgeClass() {
+        return switch (this) {
+            case ACCEPTED -> "bg-success text-white";
+            case REJECTED -> "bg-danger text-white";
+            case UNDER_REVIEW -> "bg-warning text-dark";
+            case REVISION_REQUESTED -> "bg-secondary text-white";
+            case SUBMITTED -> "bg-primary text-white";
+        };
+    }
 }

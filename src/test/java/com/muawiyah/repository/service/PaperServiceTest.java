@@ -12,6 +12,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -48,6 +55,8 @@ class PaperServiceTest {
         return form;
     }
 
+    // ─── submitPaper tests ────────────────────────────────────────────────────
+
     @Test
     @DisplayName("Should save Paper with all fields correctly mapped from the form DTO")
     void shouldMapFormFieldsToPaperEntity() {
@@ -57,7 +66,6 @@ class PaperServiceTest {
 
         paperService.submitPaper(validForm(), "lamport");
 
-        // Capture the Paper that was passed to save()
         ArgumentCaptor<Paper> captor = ArgumentCaptor.forClass(Paper.class);
         verify(paperRepository).save(captor.capture());
 
@@ -100,5 +108,76 @@ class PaperServiceTest {
         Paper result = paperService.submitPaper(validForm(), "researcher");
 
         assertThat(result.getId()).isEqualTo(42L);
+    }
+
+    // ─── findAll tests ────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findAll should delegate to repository and return the same Page")
+    void shouldDelegateFindAllToRepository() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Paper p1 = new Paper(); p1.setId(1L);
+        Paper p2 = new Paper(); p2.setId(2L);
+        Page<Paper> expected = new PageImpl<>(List.of(p1, p2), pageable, 2);
+        when(paperRepository.findAll(pageable)).thenReturn(expected);
+
+        Page<Paper> result = paperService.findAll(pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getContent()).containsExactly(p1, p2);
+        verify(paperRepository).findAll(pageable);
+    }
+
+    @Test
+    @DisplayName("findAll should return an empty Page when no papers exist")
+    void shouldReturnEmptyPageWhenNoPapersExist() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(paperRepository.findAll(pageable)).thenReturn(Page.empty(pageable));
+
+        Page<Paper> result = paperService.findAll(pageable);
+
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    // ─── findById tests ───────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("findById should return the paper wrapped in Optional when it exists")
+    void shouldReturnPaperWhenIdExists() {
+        Paper paper = new Paper();
+        paper.setId(10L);
+        when(paperRepository.findById(10L)).thenReturn(Optional.of(paper));
+
+        Optional<Paper> result = paperService.findById(10L);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(10L);
+    }
+
+    @Test
+    @DisplayName("findById should return empty Optional for a non-existent ID")
+    void shouldReturnEmptyOptionalForNonExistentId() {
+        when(paperRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Optional<Paper> result = paperService.findById(999L);
+
+        assertThat(result).isEmpty();
+    }
+
+    // ─── search tests ─────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("search should delegate to searchByKeyword repository query")
+    void shouldDelegateSearchToRepositoryQuery() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Paper match = new Paper(); match.setId(3L); match.setTitle("Machine Learning Paper");
+        Page<Paper> expected = new PageImpl<>(List.of(match), pageable, 1);
+        when(paperRepository.searchByKeyword("machine", pageable)).thenReturn(expected);
+
+        Page<Paper> result = paperService.search("machine", pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo("Machine Learning Paper");
+        verify(paperRepository).searchByKeyword("machine", pageable);
     }
 }
