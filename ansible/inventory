@@ -1,0 +1,8 @@
+[webservers]
+localhost ansible_connection=local
+
+[webservers:vars]
+ansible_python_interpreter=/usr/bin/python3
+app_port=8081
+app_image=muawiyah123/research-paper-repository:latest
+container_name=research-paper-repository
