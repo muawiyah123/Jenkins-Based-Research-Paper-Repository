@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} + ' — Research Paper Repository'">Submit Paper — Research Paper Repository</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter (matching home page design) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #0f172a !important;
+            letter-spacing: -0.025em;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            padding: 2.5rem 0;
+            border-bottom: 1px solid #334155;
+        }
+        .form-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            background: #ffffff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #374151;
+        }
+        .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+        }
+        .char-hint {
+            font-size: 0.78rem;
+            color: #94a3b8;
+        }
+        .required-star {
+            color: #ef4444;
+        }
+        .footer {
+            background-color: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            padding: 2.5rem 0;
+            margin-top: 5rem;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        .nav-link.disabled-planned {
+            color: #94a3b8 !important;
+            cursor: not-allowed;
+        }
+        .badge-phase {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar (matching home page) -->
+    <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <svg class="me-2 text-primary" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+                    <path d="M6 6h10"></path>
+                    <path d="M6 10h10"></path>
+                </svg>
+                <span>Research Paper Repository</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link disabled-planned" title="Scheduled for Week 5">
+                            Catalog <span class="badge bg-secondary badge-phase ms-1">Week 5</span>
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <!-- Submit Paper is now active — no placeholder badge -->
+                        <a class="nav-link active fw-semibold text-primary" href="/papers/submit">Submit Paper</a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link disabled-planned" title="Scheduled for Week 6">
+                            Review Portal <span class="badge bg-secondary badge-phase ms-1">Week 6</span>
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link disabled-planned" title="Scheduled for Week 7">
+                            Dashboard <span class="badge bg-secondary badge-phase ms-1">Week 7</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="page-header">
+        <div class="container">
+            <nav aria-label="breadcrumb" class="mb-2">
+                <ol class="breadcrumb mb-0" style="--bs-breadcrumb-divider-color: #64748b;">
+                    <li class="breadcrumb-item">
+                        <a href="/" class="text-decoration-none" style="color: #94a3b8;">Home</a>
+                    </li>
+                    <li class="breadcrumb-item active" style="color: #e2e8f0;" aria-current="page">
+                        Submit Paper
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold mb-1">Submit Research Paper</h1>
+            <p class="mb-0 opacity-75">
+                Complete all required fields marked with
+                <span class="required-star fw-bold">*</span>
+                to submit your paper metadata to the repository.
+            </p>
+        </div>
+    </header>
+
+    <!-- Main Form -->
+    <main class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-7">
+
+                <!-- Authentication notice (placeholder, remove when Task 9 adds security) -->
+                <div class="alert alert-info d-flex align-items-start mb-4" role="alert">
+                    <svg class="me-2 flex-shrink-0 mt-1" width="18" height="18" fill="none" stroke="currentColor"
+                         stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4M12 8h.01"></path>
+                    </svg>
+                    <div>
+                        <strong>Development Notice:</strong> Authentication is not yet configured
+                        (scheduled for Week 6). Your submission will be recorded under
+                        the placeholder username <code>researcher</code> until authentication is implemented.
+                    </div>
+                </div>
+
+                <!-- Form card -->
+                <div class="form-card p-4 p-md-5">
+                    <form th:action="@{/papers/submit}"
+                          th:object="${paperForm}"
+                          method="post"
+                          novalidate>
+
+                        <!-- Title -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label">
+                                Paper Title <span class="required-star">*</span>
+                            </label>
+                            <input type="text"
+                                   id="title"
+                                   class="form-control"
+                                   th:field="*{title}"
+                                   th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'"
+                                   placeholder="Enter the full title of the research paper"
+                                   maxlength="255">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('title')}"
+                                 th:errors="*{title}">Title error</div>
+                            <div class="char-hint mt-1">5 to 255 characters</div>
+                        </div>
+
+                        <!-- Authors -->
+                        <div class="mb-4">
+                            <label for="authors" class="form-label">
+                                Authors <span class="required-star">*</span>
+                            </label>
+                            <input type="text"
+                                   id="authors"
+                                   class="form-control"
+                                   th:field="*{authors}"
+                                   th:classappend="${#fields.hasErrors('authors')} ? 'is-invalid'"
+                                   placeholder="e.g. Ada Lovelace, Charles Babbage"
+                                   maxlength="255">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('authors')}"
+                                 th:errors="*{authors}">Authors error</div>
+                            <div class="char-hint mt-1">Separate multiple authors with commas</div>
+                        </div>
+
+                        <!-- Abstract -->
+                        <div class="mb-4">
+                            <label for="abstractText" class="form-label">
+                                Abstract <span class="required-star">*</span>
+                            </label>
+                            <textarea id="abstractText"
+                                      class="form-control"
+                                      th:field="*{abstractText}"
+                                      th:classappend="${#fields.hasErrors('abstractText')} ? 'is-invalid'"
+                                      rows="6"
+                                      maxlength="4000"
+                                      placeholder="Provide a comprehensive summary of your research..."></textarea>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('abstractText')}"
+                                 th:errors="*{abstractText}">Abstract error</div>
+                            <div class="char-hint mt-1">20 to 4000 characters</div>
+                        </div>
+
+                        <!-- Keywords -->
+                        <div class="mb-4">
+                            <label for="keywords" class="form-label">
+                                Keywords <span class="required-star">*</span>
+                            </label>
+                            <input type="text"
+                                   id="keywords"
+                                   class="form-control"
+                                   th:field="*{keywords}"
+                                   th:classappend="${#fields.hasErrors('keywords')} ? 'is-invalid'"
+                                   placeholder="e.g. DevOps, CI/CD, Jenkins, Automation"
+                                   maxlength="255">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('keywords')}"
+                                 th:errors="*{keywords}">Keywords error</div>
+                            <div class="char-hint mt-1">Separate topics with commas</div>
+                        </div>
+
+                        <!-- Publication Year -->
+                        <div class="mb-4">
+                            <label for="publicationYear" class="form-label">
+                                Publication Year <span class="required-star">*</span>
+                            </label>
+                            <input type="number"
+                                   id="publicationYear"
+                                   class="form-control"
+                                   style="max-width: 180px;"
+                                   th:field="*{publicationYear}"
+                                   th:classappend="${#fields.hasErrors('publicationYear')} ? 'is-invalid'"
+                                   min="1900"
+                                   max="2030"
+                                   placeholder="e.g. 2025">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('publicationYear')}"
+                                 th:errors="*{publicationYear}">Year error</div>
+                            <div class="char-hint mt-1">Between 1900 and 2030</div>
+                        </div>
+
+                        <!-- DOI or URL (optional) -->
+                        <div class="mb-4">
+                            <label for="doiUrl" class="form-label">
+                                DOI or URL
+                                <span class="badge bg-light text-secondary border ms-1" style="font-size:0.7rem;">Optional</span>
+                            </label>
+                            <input type="url"
+                                   id="doiUrl"
+                                   class="form-control"
+                                   th:field="*{doiUrl}"
+                                   th:classappend="${#fields.hasErrors('doiUrl')} ? 'is-invalid'"
+                                   placeholder="https://doi.org/10.1000/example"
+                                   maxlength="255">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('doiUrl')}"
+                                 th:errors="*{doiUrl}">URL error</div>
+                            <div class="char-hint mt-1">Must begin with http:// or https:// if provided</div>
+                        </div>
+
+                        <!-- Submitter Email -->
+                        <div class="mb-4">
+                            <label for="submitterEmail" class="form-label">
+                                Your Contact Email <span class="required-star">*</span>
+                            </label>
+                            <input type="email"
+                                   id="submitterEmail"
+                                   class="form-control"
+                                   th:field="*{submitterEmail}"
+                                   th:classappend="${#fields.hasErrors('submitterEmail')} ? 'is-invalid'"
+                                   placeholder="your@email.com"
+                                   maxlength="255">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('submitterEmail')}"
+                                 th:errors="*{submitterEmail}">Email error</div>
+                            <div class="char-hint mt-1">
+                                <svg width="13" height="13" fill="none" stroke="#94a3b8" stroke-width="2"
+                                     viewBox="0 0 24 24" class="me-1">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                                Private — never displayed publicly in the catalog or paper details.
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-3">
+                            <button type="submit" id="submitPaperBtn"
+                                    class="btn btn-primary px-5 fw-semibold">
+                                Submit Paper
+                            </button>
+                            <a href="/" class="btn btn-outline-secondary px-4">
+                                Cancel
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+                <!-- end .form-card -->
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-1 fw-semibold text-dark">
+                Jenkins-Based Research Paper Repository &bull; Academic Project
+            </p>
+            <p class="mb-0 text-muted">
+                Muawiyah Narvel | Roll No: 23108A0020 | Java 21 LTS | Spring Boot 3.4.3
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
