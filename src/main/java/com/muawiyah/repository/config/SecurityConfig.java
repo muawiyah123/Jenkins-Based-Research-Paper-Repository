@@ -83,8 +83,9 @@ public class SecurityConfig {
                 // Reviewer capabilities (Task 10)
                 .requestMatchers("/papers/review", "/papers/*/review", "/papers/*/status").hasRole("REVIEWER")
 
-                // Admin capabilities (Task 11)
-                .requestMatchers("/admin/**", "/dashboard/**").hasRole("ADMIN")
+                // Dashboard for all authenticated roles (Task 11 - US-008)
+                .requestMatchers("/dashboard", "/dashboard/**").authenticated()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
 
                 // Any other requests require authentication
                 .anyRequest().authenticated()

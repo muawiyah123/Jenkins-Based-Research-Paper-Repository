@@ -395,4 +395,50 @@ class PaperServiceTest {
         assertThat(result.getContent()).containsExactly(p);
         verify(paperRepository).findByReviewStatus(ReviewStatus.UNDER_REVIEW, pageable);
     }
+
+    // ─── Metrics Dashboard tests (Task 11 - US-008) ──────────────────────────
+
+    @Test
+    @DisplayName("countTotalPapers should delegate to repository count")
+    void shouldDelegateCountTotalPapersToRepository() {
+        when(paperRepository.count()).thenReturn(42L);
+
+        long count = paperService.countTotalPapers();
+
+        assertThat(count).isEqualTo(42L);
+        verify(paperRepository).count();
+    }
+
+    @Test
+    @DisplayName("getReviewStatusCounts should return map containing counts for all 5 review statuses")
+    void shouldReturnCountsForAllReviewStatuses() {
+        when(paperRepository.countByReviewStatus(ReviewStatus.SUBMITTED)).thenReturn(1L);
+        when(paperRepository.countByReviewStatus(ReviewStatus.UNDER_REVIEW)).thenReturn(2L);
+        when(paperRepository.countByReviewStatus(ReviewStatus.REVISION_REQUESTED)).thenReturn(1L);
+        when(paperRepository.countByReviewStatus(ReviewStatus.ACCEPTED)).thenReturn(3L);
+        when(paperRepository.countByReviewStatus(ReviewStatus.REJECTED)).thenReturn(1L);
+
+        java.util.Map<ReviewStatus, Long> counts = paperService.getReviewStatusCounts();
+
+        assertThat(counts).hasSize(5);
+        assertThat(counts.get(ReviewStatus.SUBMITTED)).isEqualTo(1L);
+        assertThat(counts.get(ReviewStatus.UNDER_REVIEW)).isEqualTo(2L);
+        assertThat(counts.get(ReviewStatus.REVISION_REQUESTED)).isEqualTo(1L);
+        assertThat(counts.get(ReviewStatus.ACCEPTED)).isEqualTo(3L);
+        assertThat(counts.get(ReviewStatus.REJECTED)).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("getRecentSubmissions should query repository with sort by createdAt descending")
+    void shouldReturnRecentSubmissionsSortedDesc() {
+        Paper p1 = new Paper(); p1.setId(1L);
+        Paper p2 = new Paper(); p2.setId(2L);
+        Page<Paper> page = new PageImpl<>(List.of(p1, p2));
+        when(paperRepository.findAll(any(Pageable.class))).thenReturn(page);
+
+        List<Paper> recents = paperService.getRecentSubmissions(5);
+
+        assertThat(recents).containsExactly(p1, p2);
+        verify(paperRepository).findAll(any(Pageable.class));
+    }
 }

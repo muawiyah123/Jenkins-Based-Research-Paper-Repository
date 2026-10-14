@@ -85,7 +85,10 @@
                         <a class="nav-link" href="/papers">Catalog</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active fw-semibold text-primary" href="/papers/review">Review Portal</a>
+                        <a class="nav-link" href="/papers/review">Review Portal</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
                     </li>
                     <li class="nav-item ms-lg-2" sec:authorize="isAuthenticated()">
                         <form th:action="@{/logout}" method="post" class="d-inline m-0">
