@@ -39,4 +39,8 @@ application-local.properties
 __pycache__/
 *.pyc
 
+### Microsoft Office Temporary Lock Files ###
+~$*
+
+
 
