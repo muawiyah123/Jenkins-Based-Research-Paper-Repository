@@ -83,8 +83,20 @@ terminal_cards = [
 * a120cf8 feat: configure Spring Security 6 role-based access control with in-memory accounts
 * ebfb321 feat: implement author metadata edit and revision resubmission workflow
 * b55e347 feat: implement public research paper catalog with real-time keyword search"""
+    },
+    {
+        "filename": "docker-06-cli-build-verification.png",
+        "tab_title": "Administrator: Windows PowerShell",
+        "command": "docker compose up -d; docker ps",
+        "output": """[+] Running 2/2
+ ✔ Network jenkins-based-research-paper-repository_default  Created
+ ✔ Container research-paper-repository                     Started
+
+CONTAINER ID   IMAGE                                          COMMAND                  CREATED         STATUS                   PORTS                    NAMES
+c922cb635a09   muawiyah123/research-paper-repository:latest   "sh -c 'exec java $J…"   1 minute ago    Up 1 minute (healthy)    0.0.0.0:8081->8081/tcp   research-paper-repository"""
     }
 ]
+
 
 for card in terminal_cards:
     html = f"""<!DOCTYPE html>
