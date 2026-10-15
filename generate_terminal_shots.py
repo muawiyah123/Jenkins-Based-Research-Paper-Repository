@@ -8,7 +8,7 @@ chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 terminal_cards = [
     {
         "filename": "cmd-01-mvnw-test.png",
-        "title": "PowerShell - Standard Test Suite Execution (mvnw test)",
+        "tab_title": "Administrator: Windows PowerShell",
         "command": ".\\mvnw.cmd test",
         "output": """[INFO] Scanning for projects...
 [INFO] Building repository 0.0.1-SNAPSHOT
@@ -44,7 +44,7 @@ terminal_cards = [
     },
     {
         "filename": "cmd-02-selenium-e2e.png",
-        "title": "PowerShell - Selenium Headless Chrome E2E Tests (mvnw test -P e2e)",
+        "tab_title": "Administrator: Windows PowerShell",
         "command": ".\\mvnw.cmd test -P e2e -Dtest=PaperSubmissionUiTest",
         "output": """[INFO] Scanning for projects...
 [INFO] Building repository 0.0.1-SNAPSHOT
@@ -67,7 +67,7 @@ terminal_cards = [
     },
     {
         "filename": "cmd-03-git-log.png",
-        "title": "PowerShell - Git Commit History & Branching Baseline",
+        "tab_title": "Administrator: Windows PowerShell",
         "command": "git log --graph --oneline -n 12",
         "output": """* bade757 (HEAD -> main, development) docs: add report generation script
 * 244050f (origin/main, origin/development) docs: generate comprehensive 15-task academic project report with CI/CD screenshot evidence
@@ -96,78 +96,125 @@ for card in terminal_cards:
     margin: 0;
     padding: 24px;
     background: #0f172a;
-    font-family: Consolas, "Courier New", monospace;
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
     display: flex;
     justify-content: center;
     align-items: center;
   }}
   .window {{
-    width: 1000px;
-    background: #1e1e1e;
-    border-radius: 10px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    width: 1040px;
+    background: #0c0c0c;
+    border-radius: 8px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.7);
     overflow: hidden;
     border: 1px solid #334155;
   }}
-  .header {{
-    background: #2d2d2d;
-    padding: 10px 14px;
+  /* Windows Terminal Title Bar */
+  .title-bar {{
+    background: #1f1f1f;
+    height: 38px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    border-bottom: 1px solid #2a2a2a;
+  }}
+  .tab-container {{
     display: flex;
     align-items: center;
-    border-bottom: 1px solid #3e3e3e;
+    height: 100%;
+    padding-left: 8px;
   }}
-  .dots {{
-    display: flex;
-    gap: 7px;
-    margin-right: 14px;
-  }}
-  .dot {{
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-  }}
-  .dot.red {{ background: #ff5f56; }}
-  .dot.yellow {{ background: #ffbd2e; }}
-  .dot.green {{ background: #27c93f; }}
-  .title {{
-    color: #94a3b8;
+  .tab {{
+    background: #0c0c0c;
+    color: #ffffff;
     font-size: 12px;
-    font-family: -apple-system, sans-serif;
+    font-family: "Segoe UI", -apple-system, sans-serif;
     font-weight: 500;
+    padding: 0 16px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 6px 6px 0 0;
+    margin-top: 6px;
+    border-top: 2px solid #0078d4;
   }}
-  .body {{
-    padding: 16px 20px;
-    color: #e2e8f0;
-    font-size: 13px;
-    line-height: 1.45;
-  }}
-  .prompt {{
+  .tab-icon {{
     color: #38bdf8;
     font-weight: bold;
+    font-size: 13px;
+    font-family: "Cascadia Code", Consolas, monospace;
+  }}
+  .tab-close {{
+    margin-left: 10px;
+    color: #888888;
+    font-size: 12px;
+  }}
+  .add-tab {{
+    color: #888888;
+    font-size: 18px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+  }}
+  /* Windows Window Controls (Minimize, Maximize, Close) */
+  .window-controls {{
+    display: flex;
+    height: 100%;
+  }}
+  .win-btn {{
+    width: 46px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #cccccc;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 12px;
+  }}
+  .win-btn.close {{
+    font-size: 14px;
+  }}
+  /* Terminal Body */
+  .body {{
+    padding: 18px 22px;
+    color: #cccccc;
+    font-size: 13px;
+    line-height: 1.45;
+    background: #0c0c0c;
+  }}
+  .prompt {{
+    color: #cccccc;
+    font-weight: normal;
     margin-bottom: 8px;
   }}
   .cmd {{
-    color: #facc15;
+    color: #ffffff;
+    font-weight: bold;
   }}
   .output {{
     white-space: pre-wrap;
-    color: #cbd5e1;
-  }}
-  .success {{
-    color: #4ade80;
-    font-weight: bold;
+    color: #cccccc;
   }}
 </style>
 </head>
 <body>
   <div class="window">
-    <div class="header">
-      <div class="dots">
-        <div class="dot red"></div>
-        <div class="dot yellow"></div>
-        <div class="dot green"></div>
+    <div class="title-bar">
+      <div class="tab-container">
+        <div class="tab">
+          <span class="tab-icon">&gt;_</span>
+          <span>{card["tab_title"]}</span>
+          <span class="tab-close">&#x2715;</span>
+        </div>
+        <div class="add-tab">+</div>
       </div>
-      <div class="title">{card["title"]}</div>
+      <div class="window-controls">
+        <div class="win-btn">&#x2014;</div>
+        <div class="win-btn">&#x25A1;</div>
+        <div class="win-btn close">&#x2715;</div>
+      </div>
     </div>
     <div class="body">
       <div class="prompt">PS C:\\Users\\Muawiyah\\Desktop\\Jenkins-Based Research Paper Repository&gt; <span class="cmd">{card["command"]}</span></div>
@@ -193,6 +240,6 @@ for card in terminal_cards:
     subprocess.run(cmd, capture_output=True)
     if os.path.exists(temp_html):
         os.remove(temp_html)
-    print(f"Generated terminal screenshot: {out_img}")
+    print(f"Generated Windows Terminal screenshot: {out_img}")
 
-print("All terminal cards generated successfully!")
+print("All Windows Terminal cards generated successfully!")
