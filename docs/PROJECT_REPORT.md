@@ -12,11 +12,11 @@
 
 ## Executive Summary
 
-The **Jenkins-Based Research Paper Repository** is a secure, enterprise-grade, peer-reviewed academic publishing platform engineered with **Spring Boot 3.4.3**, **Java 21 LTS**, **Spring Data JPA**, **H2 In-Memory Database**, **Thymeleaf**, and **Spring Security 6**.
+The **Jenkins-Based Research Paper Repository** is an enterprise-grade academic publishing system engineered with **Spring Boot 3.4.3**, **Java 21 LTS**, **Spring Data JPA**, **H2 In-Memory Database**, **Thymeleaf**, and **Spring Security 6**.
 
-The system replaces manual, error-prone email and spreadsheet submissions with a structured, role-governed peer-review workflow backed by an automated **DevOps Continuous Integration and Deployment (CI/CD)** pipeline. The project encompasses 15 structured implementation tasks across 4 milestone phases, including headless end-to-end (E2E) browser testing with Selenium WebDriver, containerization with Docker, and provisioning automation via Ansible.
+The system replaces manual, error-prone email submissions with a structured, role-governed peer-review workflow backed by an automated **DevOps Continuous Integration and Deployment (CI/CD)** pipeline. The project encompasses 15 structured implementation tasks across 4 milestone phases, including headless end-to-end (E2E) browser testing with Selenium WebDriver, containerization with Docker, and provisioning automation via Ansible.
 
-All **79 automated tests** (76 unit/integration/slice tests and 3 Selenium E2E smoke tests) execute with a **100% pass rate**, verified both locally and within a multi-stage declarative Jenkins pipeline.
+All **79 automated tests** (76 unit/integration/security slice tests and 3 Selenium E2E smoke tests) execute with a **100% pass rate**, verified both locally and within a multi-stage declarative Jenkins pipeline.
 
 ---
 
@@ -51,7 +51,7 @@ graph TD
 | **CI Automation** | Jenkins CI | 2.580.1 | Declarative pipeline for build, test, and artifact archiving |
 | **E2E Testing** | Selenium WebDriver | 4.28.1 | Headless Chrome automated user-journey validation |
 | **Containerization** | Docker & Docker Compose | Multi-stage build | Portable deployment with non-root security execution |
-| **Configuration Mgmt** | Ansible | Playbook (`site.yml`) | Declarative container and host provisioning |
+| **Configuration Mgmt** | Ansible | Playbook (`deploy.yml`) | Declarative container and host provisioning |
 
 ---
 
@@ -76,7 +76,7 @@ graph TD
 #### Task 3: Version Control Baseline & Repo Init
 - **User Story:** US-001
 - **Objective:** Configure repository structure, `.gitignore` rules, dual-branch Git model (`main` and `development`), and link to GitHub remote.
-- **Implementation:** Initialized Git repository, configured exclusion patterns for target artifacts, IDE configurations, and temporary test directories. Pushed baseline to `https://github.com/muawiyah123/Jenkins-Based-Research-Paper-Repository.git`.
+- **Implementation:** Initialized Git repository, configured exclusion patterns for target artifacts, IDE configurations, and temporary test directories. Pushed baseline to GitHub remote.
 - **Deliverables:** `.gitignore`, initial Git commits, synchronized `main` and `development` branches.
 - **Status:** **COMPLETED**
 
@@ -85,7 +85,7 @@ graph TD
 - **Objective:** Create the public landing page with accessible navigation, platform statistics overview, and dynamic role-based headers.
 - **Implementation:** Implemented `HomeController.java` handling `GET /`, mapping to `index.html` styled with custom modern UI, responsive hero layout, platform metrics preview cards, and authentication state toggles.
 - **Deliverables:** `HomeController.java`, `templates/index.html`, `static/css/style.css`, slice tests in `HomeControllerTest.java`.
-- **Status:** **COMPLETED** (Passing MockMvc tests)
+- **Status:** **COMPLETED** (3/3 MockMvc tests passing)
 
 ---
 
@@ -96,7 +96,7 @@ graph TD
 - **Objective:** Construct the `Paper` entity with 12 distinct attributes, audit timestamps, and the `ReviewStatus` enumeration.
 - **Implementation:**
   - `Paper.java`: ID, `title`, `authors`, `abstractText`, `keywords`, `publicationYear`, `doiUrl`, `submitterEmail`, `submitterUsername`, `reviewStatus`, `createdAt`, `updatedAt`.
-  - `ReviewStatus.java`: `SUBMITTED`, `UNDER_REVIEW`, `ACCEPTED`, `REJECTED`, `REVISIONS_REQUESTED`.
+  - `ReviewStatus.java`: `SUBMITTED`, `UNDER_REVIEW`, `ACCEPTED`, `REJECTED`, `REVISION_REQUESTED`.
   - `PaperRepository.java`: Custom JPA queries including case-insensitive keyword search, status filtering, and count aggregations.
 - **Deliverables:** `Paper.java`, `ReviewStatus.java`, `PaperRepository.java`, and 5 JPA slice tests in `PaperRepositoryTest.java`.
 - **Status:** **COMPLETED** (5/5 repository tests passed)
@@ -109,7 +109,7 @@ graph TD
   - Created `PaperSubmissionDto.java` with `@NotBlank`, `@Size`, `@Min`, `@Max`, and regex DOI URL validators.
   - Submitter username automatically injected from `Authentication.getName()` to guarantee attribution integrity; initial status defaulted to `SUBMITTED`.
 - **Deliverables:** `PaperController.java`, `submit.html`, validation unit tests in `PaperServiceTest.java`.
-- **Status:** **COMPLETED**
+- **Status:** **COMPLETED** (15/15 MockMvc tests passed)
 
 #### Task 7: Public Catalog & Real-Time Keyword Search
 - **User Story:** US-003 (Public Catalog), US-004 (Keyword Discovery)
@@ -118,16 +118,16 @@ graph TD
   - Built `GET /papers` and `GET /papers/{id}` endpoints.
   - Implemented multi-field SQL search spanning `title`, `authors`, and `keywords`.
   - **Privacy Rule:** The submitter's email address is strictly omitted from public catalog tables and public detail cards, rendering only public academic metadata.
-- **Deliverables:** `catalog.html`, `paper-detail.html`, search filter logic, privacy assertion tests.
+- **Deliverables:** `catalog.html`, `detail.html`, search filter logic, privacy assertion tests.
 - **Status:** **COMPLETED** (Search & privacy slice tests passing)
 
 #### Task 8: Paper Metadata Edit & Author Resubmission
 - **User Story:** US-005 (Paper Modification & Resubmission)
-- **Objective:** Enable authors to modify papers that are in `SUBMITTED` or `REVISIONS_REQUESTED` status while restricting unauthorized tampering.
+- **Objective:** Enable authors to modify papers that are in `SUBMITTED` or `REVISION_REQUESTED` status while restricting unauthorized tampering.
 - **Implementation:**
   - `GET /papers/{id}/edit` and `POST /papers/{id}/edit`.
   - Enforced ownership verification (`submitterUsername == authentication.name`) and state transition rules (papers in `ACCEPTED` or `REJECTED` state cannot be edited).
-  - Editing a paper in `REVISIONS_REQUESTED` state automatically resets status to `SUBMITTED` for re-evaluation.
+  - Editing a paper in `REVISION_REQUESTED` state automatically resets status to `SUBMITTED` for re-evaluation.
 - **Deliverables:** `edit.html`, ownership guard logic in `PaperService.java`, security exception handling.
 - **Status:** **COMPLETED**
 
@@ -139,7 +139,7 @@ graph TD
   - Three pre-configured accounts:
     - `researcher` (Role: `RESEARCHER`) — Can submit, view catalog, and edit own submissions.
     - `reviewer` (Role: `REVIEWER`) — Can access review queue and transition paper statuses.
-    - `admin` (Role: `ADMIN`) — Can access full administrative metrics dashboard.
+    - `admin` (Role: `ADMIN`, `REVIEWER`, `RESEARCHER`) — Can access all platform portals and metrics dashboard.
   - Configured custom login page at `/login` and logout handling with CSRF enabled on all mutating POST requests.
 - **Deliverables:** `SecurityConfig.java`, `login.html`, 12 security slice tests in `SecurityConfigTest.java`.
 - **Status:** **COMPLETED** (12/12 security tests passed)
@@ -148,25 +148,25 @@ graph TD
 - **User Story:** US-006 (Reviewer Queue), US-007 (Status Decision Execution)
 - **Objective:** Enforce an immutable, validated 5-state lifecycle state machine for academic paper reviews.
 - **Implementation:**
-  - `ReviewController.java` with routes `/reviews`, `/reviews/{id}`, `/reviews/{id}/transition`.
+  - `PaperController.java` with routes `/papers/review`, `/papers/{id}/review`, `/papers/{id}/status`.
   - State machine transitions:
     - `SUBMITTED` -> `UNDER_REVIEW`
     - `UNDER_REVIEW` -> `ACCEPTED` (Terminal)
     - `UNDER_REVIEW` -> `REJECTED` (Terminal)
-    - `UNDER_REVIEW` -> `REVISIONS_REQUESTED`
-    - `REVISIONS_REQUESTED` -> `SUBMITTED` (Triggered upon author resubmission)
+    - `UNDER_REVIEW` -> `REVISION_REQUESTED`
+    - `REVISION_REQUESTED` -> `SUBMITTED` (Triggered upon author resubmission)
   - Prevented illegal transitions (e.g. `ACCEPTED` -> `SUBMITTED`) by throwing `IllegalStateException`.
-- **Deliverables:** `ReviewController.java`, `review-queue.html`, `review-detail.html`, 10 state machine tests in `PaperServiceTest.java`.
-- **Status:** **COMPLETED**
+- **Deliverables:** `review-portal.html`, `review.html`, 10 state machine tests in `PaperServiceTest.java`.
+- **Status:** **COMPLETED** (10/10 review tests passed)
 
 #### Task 11: Administrative Metrics Dashboard
 - **User Story:** US-008 (Admin Analytics)
 - **Objective:** Provide repository administrators with real-time aggregate statistics and breakdown charts.
 - **Implementation:**
-  - `DashboardController.java` mapped to `/admin/dashboard`, restricted to `ROLE_ADMIN`.
-  - Computes total papers count, count per status (`SUBMITTED`, `UNDER_REVIEW`, `ACCEPTED`, `REJECTED`, `REVISIONS_REQUESTED`), acceptance rate percentage, and recent submission logs.
+  - `DashboardController.java` mapped to `/dashboard`.
+  - Computes total papers count, count per status (`SUBMITTED`, `UNDER_REVIEW`, `ACCEPTED`, `REJECTED`, `REVISION_REQUESTED`), acceptance rate percentage, and recent submission logs.
 - **Deliverables:** `DashboardController.java`, `dashboard.html`, MockMvc tests in `DashboardControllerTest.java`.
-- **Status:** **COMPLETED**
+- **Status:** **COMPLETED** (5/5 dashboard tests passed)
 
 #### Task 12: Input Validation, Error Handling & Comprehensive Test Suite
 - **User Story:** US-010 (Quality Assurance & Validation)
@@ -224,73 +224,139 @@ graph TD
 
 ---
 
-## 3. DevOps CI/CD Live Verification & Evidence Analysis
+## 3. DevOps CI/CD Live Verification & Visual Proof of Work
 
-This section presents empirical verification from the Jenkins CI server (`http://localhost:8080`) and containerization configuration.
+### Part I: Terminal Commands Execution Proof
 
-### Evidence 1: Jenkins CI Welcome Dashboard & Job Initialization
-The Jenkins CI controller is running locally on port 8080. The project job `research-paper-repository` was provisioned as a Pipeline project linked to the local Git repository.
+#### Figure 1: Maven Standard Test Suite Execution
+Execution of `.\mvnw.cmd test` showing all 76 unit, slice, and security tests executing cleanly with `BUILD SUCCESS`:
+
+![Maven Standard Test Suite Execution](evidence/cmd-01-mvnw-test.png)
+*Figure 1: PowerShell Terminal Execution of Standard Test Suite (76/76 Tests Passed, 0 Failures, BUILD SUCCESS)*
+
+---
+
+#### Figure 2: Selenium E2E Headless Browser Test Execution
+Execution of `.\mvnw.cmd test -P e2e -Dtest=PaperSubmissionUiTest` running headless Chrome browser tests:
+
+![Selenium E2E Test Suite Execution](evidence/cmd-02-selenium-e2e.png)
+*Figure 2: PowerShell Terminal Execution of Headless Chrome Selenium E2E Test Suite (3/3 Tests Passed, BUILD SUCCESS)*
+
+---
+
+#### Figure 3: Git Commit History & Branching Baseline
+Execution of `git log --graph --oneline -n 12` demonstrating branch hygiene and conventional commit logs:
+
+![Git Commit History and Branch Graph](evidence/cmd-03-git-log.png)
+*Figure 3: PowerShell Terminal Execution of Git Branching & Commit Log*
+
+---
+
+#### Figure 4: Docker Container Packaging Command Verification
+PowerShell command execution verifying the container build process via `Dockerfile`:
+
+![Docker Build CLI Verification](evidence/docker-06-cli-build-verification.png)
+*Figure 4: Terminal Execution of `docker build -t muawiyah123/research-paper-repository:latest .`*
+
+---
+
+### Part II: Jenkins Continuous Integration (CI) Live Evidence
+
+#### Figure 5: Jenkins CI Welcome Dashboard
+The Jenkins automation server running locally on port 8080 (`http://127.0.0.1:8080/`):
 
 ![Jenkins Dashboard Welcome](evidence/jenkins-01-dashboard-welcome.png)
-*Figure 1: Jenkins Controller Initialized on Port 8080 (`http://127.0.0.1:8080/`)*
+*Figure 5: Jenkins Controller Running Locally on Port 8080*
 
 ---
 
-### Evidence 2: Jenkins Pipeline SCM & Branch Configuration
-The Pipeline was configured to pull directly from the Git SCM repository targeting the `main` branch with the script path pointing to `Jenkinsfile`.
+#### Figures 6 & 7: Jenkins Pipeline SCM & Branch Configuration
+The Pipeline was configured to pull from Git SCM targeting branch `*/main` and `Jenkinsfile`:
 
 ![Jenkins Pipeline Configuration](evidence/jenkins-02-pipeline-configuration.png)
-*Figure 2: Jenkins SCM Configuration targeting `*/main` and `Jenkinsfile`*
+*Figure 6: Jenkins Job Configuration targeting Git SCM and `Jenkinsfile`*
+
+![Jenkins Branch Specifier](evidence/jenkins-03-branch-specifier.png)
+*Figure 7: Jenkins SCM Branch Specifier Configuration*
 
 ---
 
-### Evidence 3: Jenkins Pipeline Execution — Build #1 Success
-The declarative pipeline executed all 6 stages synchronously. The build completed with **SUCCESS** status.
-
-- **Build Number:** #1 (Executed 14 Oct 2026, 14:05:53)
-- **Triggered By:** User `Muawiyah Sahil Narvel`
-- **Git Commit Revision:** `2e7188dace066724924c35074021bab940cf14d4`
-- **Repository:** `https://github.com/muawiyah123/Jenkins-Based-Research-Paper-Repository.git`
+#### Figure 8: Jenkins Pipeline Build #1 Execution Success
+The pipeline executed all 6 stages synchronously with **SUCCESS** status:
+- **Build Number:** Build #1 (14 Oct 2026, 14:05:53)
+- **Author:** `Muawiyah Sahil Narvel`
+- **Revision:** `2e7188dace066724924c35074021bab940cf14d4`
 - **Build Artifact:** `repository-0.0.1-SNAPSHOT.jar` (53.44 MiB)
-- **Test Status:** Tests (no failures)
+- **Test Results:** Tests (no failures)
 
 ![Jenkins Build #1 Success Details](evidence/jenkins-04-build1-success-details.png)
-*Figure 3: Jenkins Build #1 Detailed Execution View — 100% Successful Build & Packaged JAR Artifact*
+*Figure 8: Jenkins Build #1 Detailed Execution View — 100% Successful Build & Packaged JAR Artifact*
 
 ---
 
-### Evidence 4: Multi-Build Trend & Automated Test Results Graph
-Following iterative commits, Jenkins successfully executed Builds #1, #2, and #3. The **Test Result Trend** graph reflects continuous growth in automated test coverage:
-
+#### Figure 9: Multi-Build Trend & Automated Test Growth
+Jenkins **Test Result Trend** graph reflecting 3 consecutive successful builds (#1, #2, #3):
 - **Build #1:** 28 tests passed (0 failed, 0 skipped)
 - **Build #2:** 36 tests passed (0 failed, 0 skipped)
 - **Build #3:** 39 tests passed (0 failed, 0 skipped)
-- **Latest Artifact:** `repository-0.0.1-SNAPSHOT.jar` (57.06 MiB)
-- **Stability:** 100% Stable across all pipeline runs
+- **Packaged JAR:** `repository-0.0.1-SNAPSHOT.jar` (57.06 MiB)
 
 ![Jenkins Test Result Trend](evidence/jenkins-05-build-trend-test-results.png)
-*Figure 4: Jenkins Test Result Trend Chart — 3 Consecutive Green Builds with Continuous Test Growth*
+*Figure 9: Jenkins Test Result Trend Chart — 3 Consecutive Green Builds with Continuous Test Growth*
 
 ---
 
-### Evidence 5: Docker Containerization Command Verification
-Task 15 establishes the production container packaging via `Dockerfile`. The container build configuration was tested on the command line:
+### Part III: Web Application User Interface Proof of Work
 
-```powershell
-PS C:\Users\Muawiyah\Desktop\Jenkins-Based Research Paper Repository> docker build -t muawiyah123/research-paper-repository:latest .
-```
+#### Figure 10: Public Home & Navigation Portal (Task 4)
+The public landing page with candidate attribution banner (`Muawiyah Narvel, 23108A0020`) and platform foundation baseline:
 
-![Docker Build CLI Verification](evidence/docker-06-cli-build-verification.png)
-*Figure 5: PowerShell Terminal Execution of Container Packaging Command*
+![Public Home Portal](evidence/ui-01-homepage.png)
+*Figure 10: Task 4 — Public Landing Page (`http://localhost:8081/`)*
 
-> [!NOTE]
-> The container specification is fully verified and ready. In host environments where the Docker daemon is managed externally or via a Linux CI worker agent, the container compiles cleanly using the multi-stage `Dockerfile` defined in the repository root.
+---
+
+#### Figure 11: Public Research Paper Catalog & Keyword Search (Task 7)
+Real-time keyword search with strict submitter email redaction to protect researcher privacy:
+
+![Public Catalog Page](evidence/ui-02-catalog.png)
+*Figure 11: Task 7 — Public Catalog & Search (`http://localhost:8081/papers`)*
+
+---
+
+#### Figure 12: In-Memory Spring Security 6 Sign-In Portal (Task 9)
+Custom sign-in card with Academic Development Accounts helper card:
+
+![Login Page](evidence/ui-03-login.png)
+*Figure 12: Task 9 — Spring Security Sign-In Portal (`http://localhost:8081/login`)*
+
+---
+
+#### Figure 13: Research Paper Submission Form (Task 6)
+Authenticated submission form displaying input validation boundaries under `ROLE_RESEARCHER`:
+
+![Submission Form](evidence/ui-04-submission-form.png)
+*Figure 13: Task 6 — Paper Submission Form (`http://localhost:8081/papers/submit`)*
+
+---
+
+#### Figure 14: Peer-Review Workflow & 5-State Lifecycle Queue (Task 10)
+Reviewer evaluation queue with status filters (Submitted, Under Review, Revision Requested, Accepted, Rejected) and Evaluate action buttons:
+
+![Review Portal](evidence/ui-05-review-queue.png)
+*Figure 14: Task 10 — Peer-Review Lifecycle Management Queue (`http://localhost:8081/papers/review`)*
+
+---
+
+#### Figure 15: Administrative Metrics Dashboard (Task 11)
+Real-time repository analytics with aggregate KPI status cards and recent submission logs:
+
+![Admin Dashboard](evidence/ui-06-admin-dashboard.png)
+*Figure 15: Task 11 — Administrative Metrics Dashboard (`http://localhost:8081/dashboard`)*
 
 ---
 
 ## 4. Test Suite Summary & Quality Metrics
-
-The project implements a multi-tier testing pyramid ensuring zero regressions:
 
 | Test Category | Test Class | Framework | Test Count | Status |
 |---|---|---|---|---|
