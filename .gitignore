@@ -33,3 +33,14 @@ desktop.ini
 application-local.properties
 *.pem
 *.key
+
+### Python Virtual Environment & Cache ###
+.venv/
+__pycache__/
+*.pyc
+
+### Microsoft Office Temporary Lock Files ###
+~$*
+
+
+
