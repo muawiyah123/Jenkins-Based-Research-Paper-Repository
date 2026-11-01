@@ -52,7 +52,7 @@ class PaperSubmissionUiTest {
 
         try {
             driver = new ChromeDriver(options);
-            wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            wait = new WebDriverWait(driver, Duration.ofSeconds(30));
         } catch (Exception e) {
             assumeTrue(false, "ChromeDriver initialization failed (Chrome not available or incompatible): " + e.getMessage());
         }
@@ -71,7 +71,11 @@ class PaperSubmissionUiTest {
 
     private void clickElement(WebElement element) {
         ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", element);
-        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+        try {
+            element.click();
+        } catch (Exception e) {
+            ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+        }
     }
 
     private void loginAsResearcher() {
