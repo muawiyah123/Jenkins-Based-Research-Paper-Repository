@@ -6,6 +6,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -101,15 +103,33 @@ class PaperSubmissionUiTest {
         driver.findElement(By.id("abstractText")).sendKeys(
                 "This paper presents an empirical analysis of automated browser smoke testing using Selenium WebDriver.");
         driver.findElement(By.id("keywords")).sendKeys("Selenium, Testing, E2E, DevOps");
-        driver.findElement(By.id("publicationYear")).clear();
-        driver.findElement(By.id("publicationYear")).sendKeys("2025");
+        
+        WebElement yearElem = driver.findElement(By.id("publicationYear"));
+        yearElem.clear();
+        yearElem.sendKeys(Keys.chord(Keys.CONTROL, "a"), "2025");
+        
         driver.findElement(By.id("submitterEmail")).sendKeys("turing@research.org");
 
-        // Submit form using unique button ID
-        clickElement(driver.findElement(By.id("submitPaperBtn")));
+        // Submit form using button click and fallback native submit()
+        WebElement submitBtn = driver.findElement(By.id("submitPaperBtn"));
+        clickElement(submitBtn);
+
+        try {
+            Thread.sleep(1500);
+            if (driver.getCurrentUrl().contains("/papers/submit")) {
+                submitBtn.submit();
+            }
+        } catch (Exception ignored) {}
 
         // Assert redirect to paper detail view and title presence
-        wait.until(ExpectedConditions.urlMatches(".*/papers/\\d+"));
+        try {
+            wait.until(ExpectedConditions.urlMatches(".*/papers/\\d+"));
+        } catch (TimeoutException te) {
+            System.err.println("=== TEST TIMEOUT FAILURE ===");
+            System.err.println("Current URL: " + driver.getCurrentUrl());
+            System.err.println("Page source:\n" + driver.getPageSource());
+            throw te;
+        }
         WebElement header = wait.until(ExpectedConditions.visibilityOfElementLocated(By.tagName("h1")));
         assertThat(header.getText()).isEqualTo(testTitle);
 

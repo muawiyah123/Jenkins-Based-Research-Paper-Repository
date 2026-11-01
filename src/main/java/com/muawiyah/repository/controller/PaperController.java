@@ -144,9 +144,12 @@ public class PaperController {
                                RedirectAttributes redirectAttributes,
                                Model model) {
 
+        System.out.println(">>> POST /papers/submit received: title=" + form.getTitle() + ", year=" + form.getPublicationYear());
         // If any field failed validation, re-render the form with error messages.
         // The browser stays on the form page; nothing is saved.
         if (result.hasErrors()) {
+            System.err.println(">>> Form validation errors count: " + result.getErrorCount());
+            result.getAllErrors().forEach(e -> System.err.println("    Field error: " + e.toString()));
             model.addAttribute("pageTitle", "Submit Research Paper");
             return "papers/submit";
         }
