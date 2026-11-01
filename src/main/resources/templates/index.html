@@ -27,16 +27,6 @@
             padding: 5rem 0 4.5rem 0;
             border-bottom: 1px solid #334155;
         }
-        .hero-badge {
-            background-color: rgba(56, 189, 248, 0.15);
-            color: #38bdf8;
-            font-size: 0.875rem;
-            font-weight: 600;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            border-radius: 9999px;
-            padding: 0.35rem 1rem;
-            display: inline-block;
-        }
         .feature-card {
             border: 1px solid #e2e8f0;
             border-radius: 0.75rem;
@@ -57,14 +47,6 @@
             color: #94a3b8 !important;
             cursor: not-allowed;
             position: relative;
-        }
-        .footer {
-            background-color: #ffffff;
-            border-top: 1px solid #e2e8f0;
-            padding: 2.5rem 0;
-            margin-top: 5rem;
-            color: #64748b;
-            font-size: 0.875rem;
         }
     </style>
 </head>
@@ -128,9 +110,6 @@
         <div class="container text-center text-lg-start">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <div class="hero-badge mb-3">
-                        Week 6 — Role-Based Security &amp; Review State Machine
-                    </div>
                     <h1 class="display-5 fw-bold mb-3">
                         Jenkins-Based Research Paper Repository
                     </h1>
@@ -175,7 +154,6 @@
     <main class="container my-5" id="architecture">
         <div class="text-center mb-5">
             <h2 class="fw-bold">Platform Capabilities &amp; Development Roadmap</h2>
-            <p class="text-muted">Structured 14-week milestone implementation covering application development and DevOps automation.</p>
         </div>
 
         <div class="row g-4">
@@ -186,7 +164,6 @@
                     </div>
                     <h5 class="fw-bold">1. Metadata Submission</h5>
                     <p class="text-muted small">Structured entry for 12 paper fields including title, authors, abstract, keywords, publication year, and DOI link.</p>
-                    <span class="badge bg-secondary badge-phase">Sprint: Week 4</span>
                 </div>
             </div>
 
@@ -197,7 +174,6 @@
                     </div>
                     <h5 class="fw-bold">2. Public Catalog &amp; Search</h5>
                     <p class="text-muted small">Real-time keyword, title, and author search with strict privacy protection (submitter email is never exposed publicly).</p>
-                    <span class="badge bg-secondary badge-phase">Sprint: Week 5</span>
                 </div>
             </div>
 
@@ -208,7 +184,6 @@
                     </div>
                     <h5 class="fw-bold">3. Peer-Review State Machine</h5>
                     <p class="text-muted small">Role-enforced status lifecycle: SUBMITTED &rarr; UNDER_REVIEW &rarr; ACCEPTED, REJECTED, or REVISION_REQUESTED.</p>
-                    <span class="badge bg-secondary badge-phase">Sprint: Week 6</span>
                 </div>
             </div>
 
@@ -219,23 +194,10 @@
                     </div>
                     <h5 class="fw-bold">4. CI/CD &amp; DevOps Pipeline</h5>
                     <p class="text-muted small">Automated Maven builds, JUnit 5 &amp; Selenium E2E testing via Jenkins CI, Docker container packaging, and Ansible playbooks.</p>
-                    <span class="badge bg-secondary badge-phase">Sprint: Weeks 8–11</span>
                 </div>
             </div>
         </div>
     </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container text-center">
-            <p class="mb-1 fw-semibold text-dark">
-                Jenkins-Based Research Paper Repository &bull; Academic Project
-            </p>
-            <p class="mb-0 text-muted">
-                Student: <span th:text="${studentName}">Muawiyah Narvel</span> | Roll No: <span th:text="${rollNumber}">23108A0020</span> | Java 21 LTS | Spring Boot 3.4.3
-            </p>
-        </div>
-    </footer>
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
